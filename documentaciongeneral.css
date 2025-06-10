@@ -242,3 +242,60 @@ video#camera {
   cursor: pointer;
   margin-left: 10px;
 }
+#preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+#capturedImage {
+  max-width: 100%;
+  height: auto;
+  border: 2px solid #ccc;
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+/* Botones de vista previa (volver a escanear y aceptar) */
+.preview-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  align-items: center;
+}
+
+.preview-buttons button {
+  width: 90%;
+  max-width: 300px;
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-retake {
+  background-color: #f44336;
+  color: white;
+}
+
+.btn-accept {
+  background-color: #4CAF50;
+  color: white;
+}
+
+/* Responsive mejora en horizontal */
+@media (min-width: 600px) {
+  .preview-buttons {
+    flex-direction: row;
+    justify-content: center;
+  }
+
+  .preview-buttons button {
+    width: 150px;
+  }
+}
