@@ -10,8 +10,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const cancelScanBtn = document.getElementById("cancelScanBtn");
   const previewFinal = document.getElementById("previewFinal");
 
+  // Nuevo: botón para cambiar de cámara
+  const switchCameraBtn = document.createElement("button");
+  switchCameraBtn.textContent = "🔁 Cambiar cámara";
+  switchCameraBtn.className = "btn-capture";
+  captureBtn.parentNode.insertBefore(switchCameraBtn, captureBtn);
+
   let currentStream = null;
   let currentDocType = "";
+  let usingBackCamera = true;
 
   scanButtons.forEach(button => {
     button.addEventListener("click", () => {
@@ -24,15 +31,19 @@ document.addEventListener("DOMContentLoaded", () => {
     scannerContainer.style.display = "block";
     preview.style.display = "none";
     document.getElementById("loading-message").style.display = "block";
+    startCamera(usingBackCamera ? "environment" : "user");
+  }
 
-    navigator.mediaDevices.getUserMedia({ video: true })
+  function startCamera(facingMode) {
+    stopCamera();
+    navigator.mediaDevices.getUserMedia({ video: { facingMode } })
       .then(stream => {
         currentStream = stream;
         camera.srcObject = stream;
         document.getElementById("loading-message").style.display = "none";
       })
       .catch(error => {
-        alert("No se pudo acceder a la cámara");
+        alert("No se pudo acceder a la cámara: " + error);
       });
   }
 
@@ -55,12 +66,14 @@ document.addEventListener("DOMContentLoaded", () => {
     preview.style.display = "block";
     camera.style.display = "none";
     captureBtn.style.display = "none";
+    switchCameraBtn.style.display = "none";
   });
 
   retakeBtn.addEventListener("click", () => {
     preview.style.display = "none";
     camera.style.display = "block";
     captureBtn.style.display = "inline-block";
+    switchCameraBtn.style.display = "inline-block";
   });
 
   acceptBtn.addEventListener("click", () => {
@@ -77,11 +90,17 @@ document.addEventListener("DOMContentLoaded", () => {
     closeScanner();
   });
 
+  switchCameraBtn.addEventListener("click", () => {
+    usingBackCamera = !usingBackCamera;
+    startCamera(usingBackCamera ? "environment" : "user");
+  });
+
   function closeScanner() {
     stopCamera();
     scannerContainer.style.display = "none";
     preview.style.display = "none";
     captureBtn.style.display = "inline-block";
+    switchCameraBtn.style.display = "inline-block";
     camera.style.display = "block";
   }
 });
