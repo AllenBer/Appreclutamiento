@@ -1,59 +1,87 @@
-const scanButtons = document.querySelectorAll('.scan-btn');
-const scanner = document.getElementById('scanner-container');
-const video = document.getElementById('camera');
-const captureBtn = document.getElementById('captureBtn');
-const previewDiv = document.getElementById('preview');
-const capturedImage = document.getElementById('capturedImage');
-const retakeBtn = document.getElementById('retakeBtn');
-const acceptBtn = document.getElementById('acceptBtn');
-const canvas = document.createElement('canvas');
+document.addEventListener("DOMContentLoaded", () => {
+  const scanButtons = document.querySelectorAll(".scan-btn");
+  const scannerContainer = document.getElementById("scanner-container");
+  const camera = document.getElementById("camera");
+  const captureBtn = document.getElementById("captureBtn");
+  const preview = document.getElementById("preview");
+  const capturedImage = document.getElementById("capturedImage");
+  const retakeBtn = document.getElementById("retakeBtn");
+  const acceptBtn = document.getElementById("acceptBtn");
+  const cancelScanBtn = document.getElementById("cancelScanBtn");
+  const previewFinal = document.getElementById("previewFinal");
 
-let currentStream = null;
-let currentDoc = '';
+  let currentStream = null;
+  let currentDocType = "";
 
-scanButtons.forEach(btn => {
-  btn.addEventListener('click', async () => {
-    currentDoc = btn.dataset.doc;
-    scanner.style.display = 'flex';
-    previewDiv.style.display = 'none';
+  scanButtons.forEach(button => {
+    button.addEventListener("click", () => {
+      currentDocType = button.getAttribute("data-doc");
+      openScanner();
+    });
+  });
 
-    try {
-      currentStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-      video.srcObject = currentStream;
-    } catch (err) {
-      alert('Error accediendo a la cámara: ' + err.message);
-      scanner.style.display = 'none';
+  function openScanner() {
+    scannerContainer.style.display = "block";
+    preview.style.display = "none";
+    document.getElementById("loading-message").style.display = "block";
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        currentStream = stream;
+        camera.srcObject = stream;
+        document.getElementById("loading-message").style.display = "none";
+      })
+      .catch(error => {
+        alert("No se pudo acceder a la cámara");
+      });
+  }
+
+  function stopCamera() {
+    if (currentStream) {
+      currentStream.getTracks().forEach(track => track.stop());
+      camera.srcObject = null;
     }
+  }
+
+  captureBtn.addEventListener("click", () => {
+    const canvas = document.createElement("canvas");
+    canvas.width = camera.videoWidth;
+    canvas.height = camera.videoHeight;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(camera, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL("image/jpeg");
+
+    capturedImage.src = dataUrl;
+    preview.style.display = "block";
+    camera.style.display = "none";
+    captureBtn.style.display = "none";
   });
-});
 
-captureBtn.addEventListener('click', () => {
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  canvas.getContext('2d').drawImage(video, 0, 0);
-
-  const dataURL = canvas.toDataURL('image/png');
-  capturedImage.src = dataURL;
-
-  // Detener cámara
-  currentStream.getTracks().forEach(t => t.stop());
-  video.srcObject = null;
-
-  // Mostrar preview
-  previewDiv.style.display = 'block';
-});
-
-retakeBtn.addEventListener('click', () => {
-  previewDiv.style.display = 'none';
-  scanButtons.forEach(btn => {
-    if (btn.dataset.doc === currentDoc) btn.click();
+  retakeBtn.addEventListener("click", () => {
+    preview.style.display = "none";
+    camera.style.display = "block";
+    captureBtn.style.display = "inline-block";
   });
-});
 
-acceptBtn.addEventListener('click', () => {
-  const imgEl = document.createElement('img');
-  imgEl.src = capturedImage.src;
-  imgEl.alt = currentDoc;
-  document.getElementById('previewFinal').appendChild(imgEl);
-  scanner.style.display = 'none';
+  acceptBtn.addEventListener("click", () => {
+    const img = document.createElement("img");
+    img.src = capturedImage.src;
+    img.alt = `Documento: ${currentDocType}`;
+    img.classList.add("final-preview-img");
+    previewFinal.appendChild(img);
+
+    closeScanner();
+  });
+
+  cancelScanBtn.addEventListener("click", () => {
+    closeScanner();
+  });
+
+  function closeScanner() {
+    stopCamera();
+    scannerContainer.style.display = "none";
+    preview.style.display = "none";
+    captureBtn.style.display = "inline-block";
+    camera.style.display = "block";
+  }
 });
