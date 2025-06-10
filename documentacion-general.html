@@ -52,15 +52,19 @@
 
   </main>
 
-  <!-- Modal escáner -->
-<div id="scanner-container">
+  
+ <!-- Modal escáner -->
+<div id="scanner-container" style="display: none;">
   <div id="camera-wrapper">
     <video id="camera" autoplay playsinline></video>
     <div class="overlay-frame"></div>
   </div>
+
+  <!-- Botón para tomar la foto -->
   <button id="captureBtn" class="btn-accept">Tomar foto</button>
 
-  <div id="preview" style="display:none;">
+  <!-- Vista previa después de tomar la foto -->
+  <div id="preview" style="display: none;">
     <img id="capturedImage" alt="Documento escaneado" />
     <div class="preview-buttons">
       <button class="btn-retake" id="retakeBtn">Volver a escanear</button>
@@ -71,7 +75,6 @@
 
 <!-- Donde se mostrarán las imágenes aceptadas -->
 <div id="previewFinal"></div>
-
 
   <!-- Scripts -->
   <script src="scanner.js"></script>
