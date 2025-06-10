@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Documentación General</title>
+  <link rel="stylesheet" href="documentaciongeneral.css">
+</head>
+<body>
+
+  <!-- Encabezado -->
+  <header>
+    <h1>Documentación general</h1>
+    <p>Paso 1: Escanear Documentación General</p>
+    <p>Haga clic en "Escanear" para cada documento. Se abrirá la cámara para capturar la imagen. Luego podrá revisar las imágenes capturadas en el visor.</p>
+  </header>
+
+  <!-- Lista de documentos -->
+  <main>
+    <div class="document-scroll">
+  <ul class="document-list">
+    <li>Formato de alta <button class="scan-btn" data-doc="formato_alta">Escanear</button></li>
+    <li>Solicitud de empleo <button class="scan-btn" data-doc="solicitud_empleo">Escanear</button></li>
+    <li>Acta de nacimiento <button class="scan-btn" data-doc="acta_nacimiento">Escanear</button></li>
+    <li>Número de imss <button class="scan-btn" data-doc="imss">Escanear</button></li>
+    <li>Curp <button class="scan-btn" data-doc="curp">Escanear</button></li>
+    <li>Comprobante de estudios <button class="scan-btn" data-doc="estudios">Escanear</button></li>
+    <li>Comprobante de domicilio <button class="scan-btn" data-doc="domicilio">Escanear</button></li>
+    <li>Credencial de elector (Frente) <button class="scan-btn" data-doc="ine">Escanear</button></li>
+    <li>Credencial de elector (Reverso) <button class="scan-btn" data-doc="ine">Escanear</button></li>
+    <li>Guía de entrevista <button class="scan-btn" data-doc="guia_entrevista">Escanear</button></li>
+    <li>Carta de identidad (solo menores) <button class="scan-btn" data-doc="carta_identidad">Escanear</button></li>
+  </ul>
+</div>
+
+
+    <!-- Scanner -->
+    <div id="scanner-container" style="display: none;">
+      <video id="camera" autoplay playsinline></video>
+      <canvas id="canvas" style="display: none;"></canvas>
+      <div id="preview"></div>
+    </div>
+
+     <div style="display: flex; justify-content: space-between; margin: 20px;">
+  <button onclick="window.location.href='dashboard.html'" class="btn-regresar">
+    ← Regresar al inicio
+  </button>
+  <button id="siguienteBtn" class="btn-siguiente">
+    Siguiente →
+  </button>
+</div>
+
+  </main>
+
+  <!-- Modal escáner -->
+<div id="scanner-container">
+  <div id="camera-wrapper">
+    <video id="camera" autoplay playsinline></video>
+    <div class="overlay-frame"></div>
+  </div>
+  <button id="captureBtn" class="btn-accept">Tomar foto</button>
+
+  <div id="preview" style="display:none;">
+    <img id="capturedImage" alt="Documento escaneado" />
+    <div class="preview-buttons">
+      <button class="btn-retake" id="retakeBtn">Volver a escanear</button>
+      <button class="btn-accept" id="acceptBtn">Aceptar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Donde se mostrarán las imágenes aceptadas -->
+<div id="previewFinal"></div>
+
+
+  <!-- Scripts -->
+  <script src="scanner.js"></script>
+</body>
+</html>
