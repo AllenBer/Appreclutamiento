@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Documentación General</title>
   <link rel="stylesheet" href="documentaciongeneral.css">
-  <link rel="icon" type="image/png" href="icons8-document-94.png">
+    <link rel="icon" type="image/png" href="icons8-document-94.png">
 </head>
 <body>
 
@@ -34,14 +34,6 @@
   </ul>
 </div>
 
-
-    <!-- Scanner -->
-    <div id="scanner-container" style="display: none;">
-      <video id="camera" autoplay playsinline></video>
-      <canvas id="canvas" style="display: none;"></canvas>
-      <div id="preview"></div>
-    </div>
-
      <div style="display: flex; justify-content: space-between; margin: 20px;">
   <button onclick="window.location.href='dashboard.html'" class="btn-regresar">
     ← Regresar al inicio
@@ -53,31 +45,40 @@
 
   </main>
 
-  
- <!-- Modal escáner -->
+ <!-- Modal escáner con estilo copiado de la imagen -->
 <div id="scanner-container" style="display: none;">
-  <div id="camera-wrapper">
-    <video id="camera" autoplay playsinline></video>
-    <div class="overlay-frame"></div>
-  </div>
+  <div class="modal-camera">
+    <div class="video-container">
+      <div class="overlay-frame">
+        <span class="overlay-text">Alinear documento aquí</span>
+      </div>
+      <video id="camera" autoplay playsinline></video>
+      <div id="loading-message">Cargando video...</div>
+    </div>
 
-  <!-- Botón para tomar la foto -->
-  <button id="captureBtn" class="btn-accept">Tomar foto</button>
+    <div class="scanner-buttons">
+      <button id="cancelScanBtn" class="btn-cancel">Cancelar</button>
+      <button id="captureBtn" class="btn-capture">
+        📸 Tomar Foto
+      </button>
+    </div>
 
-  <!-- Vista previa después de tomar la foto -->
-  <div id="preview" style="display: none;">
-    <img id="capturedImage" alt="Documento escaneado" />
-    <div class="preview-buttons">
-      <button class="btn-retake" id="retakeBtn">Volver a escanear</button>
-      <button class="btn-accept" id="acceptBtn">Aceptar</button>
+    <div id="preview" style="display: none;">
+      <img id="capturedImage" alt="Documento escaneado" />
+      <div class="preview-buttons">
+        <button class="btn-retake" id="retakeBtn">Volver a escanear</button>
+        <button class="btn-accept" id="acceptBtn">Aceptar</button>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- Donde se mostrarán las imágenes aceptadas -->
+<!-- Contenedor para mostrar imágenes aceptadas -->
 <div id="previewFinal"></div>
 
+
+
   <!-- Scripts -->
-  <script src="scanner.js"></script>
+<script src="scanner.js"></script>
 </body>
 </html>
