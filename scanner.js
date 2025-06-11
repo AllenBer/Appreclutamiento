@@ -3,22 +3,26 @@ document.addEventListener("DOMContentLoaded", () => {
   const scannerContainer = document.getElementById("scanner-container");
   const camera = document.getElementById("camera");
   const captureBtn = document.getElementById("captureBtn");
-  const preview = document.getElementById("preview");
-  const capturedImage = document.getElementById("capturedImage");
   const retakeBtn = document.getElementById("retakeBtn");
   const acceptBtn = document.getElementById("acceptBtn");
   const cancelScanBtn = document.getElementById("cancelScanBtn");
-  const previewFinal = document.getElementById("previewFinal");
+  const capturedImage = document.getElementById("capturedImage");
+  const preview = document.getElementById("preview");
 
-  // Nuevo: botón para cambiar de cámara
+  const beforeCapture = document.getElementById("beforeCapture");
+  const afterCapture = document.getElementById("afterCapture");
+
   const switchCameraBtn = document.createElement("button");
   switchCameraBtn.textContent = "🔁 Cambiar cámara";
   switchCameraBtn.className = "btn-capture";
-  captureBtn.parentNode.insertBefore(switchCameraBtn, captureBtn);
+  beforeCapture.insertBefore(switchCameraBtn, captureBtn);
 
   let currentStream = null;
   let currentDocType = "";
   let usingBackCamera = true;
+
+  // Inicializar cliente de Filestack
+  const filestackClient = filestack.init("A31q0qbd1TYip6E7pozsLz"); // Usa tu propia API Key
 
   scanButtons.forEach(button => {
     button.addEventListener("click", () => {
@@ -31,6 +35,9 @@ document.addEventListener("DOMContentLoaded", () => {
     scannerContainer.style.display = "block";
     preview.style.display = "none";
     document.getElementById("loading-message").style.display = "block";
+    beforeCapture.style.display = "flex";
+    afterCapture.style.display = "none";
+    camera.style.display = "block";
     startCamera(usingBackCamera ? "environment" : "user");
   }
 
@@ -65,25 +72,49 @@ document.addEventListener("DOMContentLoaded", () => {
     capturedImage.src = dataUrl;
     preview.style.display = "block";
     camera.style.display = "none";
-    captureBtn.style.display = "none";
-    switchCameraBtn.style.display = "none";
+    beforeCapture.style.display = "none";
+    afterCapture.style.display = "flex";
   });
 
   retakeBtn.addEventListener("click", () => {
     preview.style.display = "none";
     camera.style.display = "block";
-    captureBtn.style.display = "inline-block";
-    switchCameraBtn.style.display = "inline-block";
+    beforeCapture.style.display = "flex";
+    afterCapture.style.display = "none";
   });
 
-  acceptBtn.addEventListener("click", () => {
-    const img = document.createElement("img");
-    img.src = capturedImage.src;
-    img.alt = `Documento: ${currentDocType}`;
-    img.classList.add("final-preview-img");
-    previewFinal.appendChild(img);
+  acceptBtn.addEventListener("click", async () => {
+    // Subir imagen a Filestack
+    const file = await fetch(capturedImage.src)
+      .then(res => res.blob())
+      .then(blob => new File([blob], `${currentDocType}.jpg`, { type: "image/jpeg" }));
 
-    closeScanner();
+    filestackClient.upload(file).then(result => {
+      const fileUrl = result.url;
+
+      const img = document.createElement("img");
+      img.src = fileUrl;
+      img.alt = `Documento: ${currentDocType}`;
+      img.classList.add("final-preview-img");
+
+      const docItem = document.querySelector(`.document-item[data-doc="${currentDocType}"]`);
+      if (docItem) {
+        const previewContainer = docItem.querySelector(".doc-preview");
+        const statusIcon = docItem.querySelector(".status-icon");
+
+        previewContainer.innerHTML = "";
+        previewContainer.appendChild(img);
+        statusIcon.textContent = "✅";
+
+        // Opcional: llamar a OCR aquí si lo deseas
+        // realizarOCR(result.handle);
+      }
+
+      closeScanner();
+    }).catch(err => {
+      alert("Error al subir el archivo a Filestack");
+      console.error(err);
+    });
   });
 
   cancelScanBtn.addEventListener("click", () => {
@@ -99,8 +130,33 @@ document.addEventListener("DOMContentLoaded", () => {
     stopCamera();
     scannerContainer.style.display = "none";
     preview.style.display = "none";
-    captureBtn.style.display = "inline-block";
-    switchCameraBtn.style.display = "inline-block";
+    beforeCapture.style.display = "flex";
+    afterCapture.style.display = "none";
     camera.style.display = "block";
   }
+
+  // (Opcional) Función para OCR de Filestack
+  async function realizarOCR(handle) {
+    try {
+      const response = await fetch(`https://cdn.filestackcontent.com/ocr/${handle}`, {
+        headers: {
+          'Filestack-API-Key': 'A31q0qbd1TYip6E7pozsLz'
+        }
+      });
+
+      const data = await response.json();
+      console.log("Texto OCR detectado:", data.text);
+    } catch (error) {
+      console.error("Error en OCR:", error);
+    }
+  }
 });
+navigator.mediaDevices.getUserMedia({ video: true })
+  .then(stream => {
+    const video = document.getElementById('camera');
+    video.srcObject = stream;
+    video.play();
+  })
+  .catch(err => {
+    alert("No se pudo acceder a la cámara: " + err);
+  });
