@@ -12,13 +12,19 @@ document.addEventListener("DOMContentLoaded", () => {
   const beforeCapture = document.getElementById("beforeCapture");
   const afterCapture = document.getElementById("afterCapture");
 
+  let currentStream = null;
+  let currentDocType = "";
+  let usandoFrontal = false; // false = cámara trasera por defecto
+
+  // Crear y agregar botón de cambiar cámara
   const switchCameraBtn = document.createElement("button");
   switchCameraBtn.textContent = "🔁 Cambiar cámara";
   switchCameraBtn.className = "btn-capture";
+  switchCameraBtn.addEventListener("click", () => {
+    usandoFrontal = !usandoFrontal;
+    startCamera(usandoFrontal ? "user" : "environment");
+  });
   beforeCapture.insertBefore(switchCameraBtn, captureBtn);
-
-  let currentStream = null;
-  let currentDocType = "";
 
   scanButtons.forEach(button => {
     button.addEventListener("click", () => {
@@ -33,7 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("loading-message").style.display = "block";
     beforeCapture.style.display = "flex";
     afterCapture.style.display = "none";
-    startCamera("environment");
+    startCamera(usandoFrontal ? "user" : "environment");
   }
 
   function startCamera(facingMode) {
