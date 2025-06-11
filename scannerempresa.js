@@ -12,17 +12,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const beforeCapture = document.getElementById("beforeCapture");
   const afterCapture = document.getElementById("afterCapture");
 
-  const switchCameraBtn = document.createElement("button");
-  switchCameraBtn.textContent = "🔁 Cambiar cámara";
-  switchCameraBtn.className = "btn-capture";
-  beforeCapture.insertBefore(switchCameraBtn, captureBtn);
-
   let currentStream = null;
   let currentDocType = "";
-  let usingBackCamera = true;
-
-  // Inicializar cliente de Filestack
-  const filestackClient = filestack.init("A31q0qbd1TYip6E7pozsLz"); // Usa tu propia API Key
 
   scanButtons.forEach(button => {
     button.addEventListener("click", () => {
@@ -32,13 +23,12 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   function openScanner() {
-    scannerContainer.style.display = "block";
+    scannerContainer.style.display = "flex";
     preview.style.display = "none";
     document.getElementById("loading-message").style.display = "block";
     beforeCapture.style.display = "flex";
     afterCapture.style.display = "none";
-    camera.style.display = "block";
-    startCamera(usingBackCamera ? "environment" : "user");
+    startCamera("environment");
   }
 
   function startCamera(facingMode) {
@@ -68,8 +58,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const ctx = canvas.getContext("2d");
     ctx.drawImage(camera, 0, 0, canvas.width, canvas.height);
     const dataUrl = canvas.toDataURL("image/jpeg");
-
     capturedImage.src = dataUrl;
+
     preview.style.display = "block";
     camera.style.display = "none";
     beforeCapture.style.display = "none";
@@ -83,80 +73,33 @@ document.addEventListener("DOMContentLoaded", () => {
     afterCapture.style.display = "none";
   });
 
-  acceptBtn.addEventListener("click", async () => {
-    // Subir imagen a Filestack
-    const file = await fetch(capturedImage.src)
-      .then(res => res.blob())
-      .then(blob => new File([blob], `${currentDocType}.jpg`, { type: "image/jpeg" }));
+  acceptBtn.addEventListener("click", () => {
+    const img = document.createElement("img");
+    img.src = capturedImage.src;
+    img.alt = `Documento escaneado`;
 
-    filestackClient.upload(file).then(result => {
-      const fileUrl = result.url;
+    const docItem = document.querySelector(`.document-item[data-doc="${currentDocType}"]`);
+    if (docItem) {
+      const previewContainer = docItem.querySelector(".doc-preview");
+      const statusIcon = docItem.querySelector(".status-icon");
+      previewContainer.innerHTML = "";
+      previewContainer.appendChild(img);
+      statusIcon.textContent = "✅";
+    }
 
-      const img = document.createElement("img");
-      img.src = fileUrl;
-      img.alt = `Documento: ${currentDocType}`;
-      img.classList.add("final-preview-img");
-
-      const docItem = document.querySelector(`.document-item[data-doc="${currentDocType}"]`);
-      if (docItem) {
-        const previewContainer = docItem.querySelector(".doc-preview");
-        const statusIcon = docItem.querySelector(".status-icon");
-
-        previewContainer.innerHTML = "";
-        previewContainer.appendChild(img);
-        statusIcon.textContent = "✅";
-
-        // Opcional: llamar a OCR aquí si lo deseas
-        // realizarOCR(result.handle);
-      }
-
-      closeScanner();
-    }).catch(err => {
-      alert("Error al subir el archivo a Filestack");
-      console.error(err);
-    });
+    closeScanner();
   });
 
   cancelScanBtn.addEventListener("click", () => {
     closeScanner();
   });
 
-  switchCameraBtn.addEventListener("click", () => {
-    usingBackCamera = !usingBackCamera;
-    startCamera(usingBackCamera ? "environment" : "user");
-  });
-
   function closeScanner() {
     stopCamera();
     scannerContainer.style.display = "none";
     preview.style.display = "none";
+    camera.style.display = "block";
     beforeCapture.style.display = "flex";
     afterCapture.style.display = "none";
-    camera.style.display = "block";
-  }
-
-  // (Opcional) Función para OCR de Filestack
-  async function realizarOCR(handle) {
-    try {
-      const response = await fetch(`https://cdn.filestackcontent.com/ocr/${handle}`, {
-        headers: {
-          'Filestack-API-Key': 'A31q0qbd1TYip6E7pozsLz'
-        }
-      });
-
-      const data = await response.json();
-      console.log("Texto OCR detectado:", data.text);
-    } catch (error) {
-      console.error("Error en OCR:", error);
-    }
   }
 });
-navigator.mediaDevices.getUserMedia({ video: true })
-  .then(stream => {
-    const video = document.getElementById('camera');
-    video.srcObject = stream;
-    video.play();
-  })
-  .catch(err => {
-    alert("No se pudo acceder a la cámara: " + err);
-  });
