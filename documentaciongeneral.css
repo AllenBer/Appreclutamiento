@@ -183,7 +183,15 @@ video#camera {
   font-size: 1rem;
   z-index: 3;
 }
-
+/* Asegúrate de que el footer no tenga margen que lo empuje arriba */
+footer {
+  text-align: center;
+  padding: 10px;
+  background-color: #f3f3f3;
+  font-size: 14px;
+  color: #555;
+  margin-top: auto;
+}
 .scanner-buttons {
   display: flex;
   justify-content: flex-end;
