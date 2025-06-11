@@ -12,6 +12,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const beforeCapture = document.getElementById("beforeCapture");
   const afterCapture = document.getElementById("afterCapture");
 
+  const switchCameraBtn = document.createElement("button");
+  switchCameraBtn.textContent = "🔁 Cambiar cámara";
+  switchCameraBtn.className = "btn-capture";
+  beforeCapture.insertBefore(switchCameraBtn, captureBtn);
+
   let currentStream = null;
   let currentDocType = "";
 
