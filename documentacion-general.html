@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Documentación General</title>
   <link rel="stylesheet" href="documentaciongeneral.css">
     <link rel="icon" type="image/png" href="icons8-document-94.png">
@@ -20,19 +20,109 @@
   <main>
     <div class="document-scroll">
   <ul class="document-list">
-    <li>Formato de alta <button class="scan-btn" data-doc="formato_alta">Escanear</button></li>
-    <li>Solicitud de empleo <button class="scan-btn" data-doc="solicitud_empleo">Escanear</button></li>
-    <li>Acta de nacimiento <button class="scan-btn" data-doc="acta_nacimiento">Escanear</button></li>
-    <li>Número de imss <button class="scan-btn" data-doc="imss">Escanear</button></li>
-    <li>Curp <button class="scan-btn" data-doc="curp">Escanear</button></li>
-    <li>Comprobante de estudios <button class="scan-btn" data-doc="estudios">Escanear</button></li>
-    <li>Comprobante de domicilio <button class="scan-btn" data-doc="domicilio">Escanear</button></li>
-    <li>Credencial de elector (Frente) <button class="scan-btn" data-doc="ine">Escanear</button></li>
-    <li>Credencial de elector (Reverso) <button class="scan-btn" data-doc="ine">Escanear</button></li>
-    <li>Guía de entrevista <button class="scan-btn" data-doc="guia_entrevista">Escanear</button></li>
-    <li>Carta de identidad (solo menores) <button class="scan-btn" data-doc="carta_identidad">Escanear</button></li>
+
+    <li class="document-item" data-doc="formato_alta">
+      <span class="doc-name">Formato de alta</span>
+      <div class="right-actions">
+        <button class="scan-btn" data-doc="formato_alta">Escanear</button>
+        <span class="status-icon">❌</span>
+      </div>
+      <div class="doc-preview"></div>
+    </li>
+
+    <li class="document-item" data-doc="solicitud_empleo">
+      <span class="doc-name">Solicitud de empleo</span>
+      <div class="right-actions">
+        <button class="scan-btn" data-doc="solicitud_empleo">Escanear</button>
+        <span class="status-icon">❌</span>
+      </div>
+      <div class="doc-preview"></div>
+    </li>
+
+    <li class="document-item" data-doc="acta_nacimiento">
+      <span class="doc-name">Acta de nacimiento</span>
+      <div class="right-actions">
+        <button class="scan-btn" data-doc="acta_nacimiento">Escanear</button>
+        <span class="status-icon">❌</span>
+      </div>
+      <div class="doc-preview"></div>
+    </li>
+
+    <li class="document-item" data-doc="imss">
+      <span class="doc-name">Número de IMSS</span>
+      <div class="right-actions">
+        <button class="scan-btn" data-doc="imss">Escanear</button>
+        <span class="status-icon">❌</span>
+      </div>
+      <div class="doc-preview"></div>
+    </li>
+
+    <li class="document-item" data-doc="curp">
+      <span class="doc-name">CURP</span>
+      <div class="right-actions">
+        <button class="scan-btn" data-doc="curp">Escanear</button>
+        <span class="status-icon">❌</span>
+      </div>
+      <div class="doc-preview"></div>
+    </li>
+
+    <li class="document-item" data-doc="estudios">
+      <span class="doc-name">Comprobante de estudios</span>
+      <div class="right-actions">
+        <button class="scan-btn" data-doc="estudios">Escanear</button>
+        <span class="status-icon">❌</span>
+      </div>
+      <div class="doc-preview"></div>
+    </li>
+
+    <li class="document-item" data-doc="domicilio">
+      <span class="doc-name">Comprobante de domicilio</span>
+      <div class="right-actions">
+        <button class="scan-btn" data-doc="domicilio">Escanear</button>
+        <span class="status-icon">❌</span>
+      </div>
+      <div class="doc-preview"></div>
+    </li>
+
+    <li class="document-item" data-doc="ine_frente">
+      <span class="doc-name">Credencial de elector (Frente)</span>
+      <div class="right-actions">
+        <button class="scan-btn" data-doc="ine_frente">Escanear</button>
+        <span class="status-icon">❌</span>
+      </div>
+      <div class="doc-preview"></div>
+    </li>
+
+    <li class="document-item" data-doc="ine_reverso">
+      <span class="doc-name">Credencial de elector (Reverso)</span>
+      <div class="right-actions">
+        <button class="scan-btn" data-doc="ine_reverso">Escanear</button>
+        <span class="status-icon">❌</span>
+      </div>
+      <div class="doc-preview"></div>
+    </li>
+
+    <li class="document-item" data-doc="guia_entrevista">
+      <span class="doc-name">Guía de entrevista</span>
+      <div class="right-actions">
+        <button class="scan-btn" data-doc="guia_entrevista">Escanear</button>
+        <span class="status-icon">❌</span>
+      </div>
+      <div class="doc-preview"></div>
+    </li>
+
+    <li class="document-item" data-doc="carta_identidad">
+      <span class="doc-name">Carta de identidad (solo menores)</span>
+      <div class="right-actions">
+        <button class="scan-btn" data-doc="carta_identidad">Escanear</button>
+        <span class="status-icon">❌</span>
+      </div>
+      <div class="doc-preview"></div>
+    </li>
+
   </ul>
 </div>
+
 
      <div style="display: flex; justify-content: space-between; margin: 20px;">
   <button onclick="window.location.href='dashboard.html'" class="btn-regresar">
@@ -56,26 +146,32 @@
       <div id="loading-message">Cargando video...</div>
     </div>
     <div class="scanner-buttons">
-      <button id="cancelScanBtn" class="btn-cancel">Cancelar</button>
-      <button id="captureBtn" class="btn-capture">
-        📸 Tomar Foto
-      </button>
-    </div>
+  <!-- Botones antes de capturar -->
+  <div id="beforeCapture">
+    <button id="cancelScanBtn" class="btn-cancel">Cancelar</button>
+    <button id="captureBtn" class="btn-capture">📸 Tomar Foto</button>
+  </div>
 
-    <div id="preview" style="display: none;">
-      <img id="capturedImage" alt="Documento escaneado" />
-      <div class="preview-buttons">
-        <button class="btn-retake" id="retakeBtn">Volver a escanear</button>
-        <button class="btn-accept" id="acceptBtn">Aceptar</button>
-      </div>
-    </div>
+  <!-- Botones después de capturar -->
+  <div id="afterCapture" style="display: none;">
+    <button class="btn-retake" id="retakeBtn">Volver a escanear</button>
+    <button class="btn-accept" id="acceptBtn">Aceptar</button>
   </div>
 </div>
+
+<!-- Imagen escaneada -->
+<div id="preview" style="display: none;">
+  <img id="capturedImage" alt="Documento escaneado" />
+</div>
+
+
+  
 
 <!-- Contenedor para mostrar imágenes aceptadas -->
 <div id="previewFinal"></div>
 
   <!-- Scripts -->
+<script src="//static.filestackapi.com/filestack-js/3.x.x/filestack.min.js"></script>
 <script src="scanner.js"></script>
 </body>
 </html>
