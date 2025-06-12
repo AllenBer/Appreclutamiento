@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Generar ZIP de Documentos</title>
+  <link rel="icon" type="image/png" href="icons8-document-94.png">
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f0f2f5;
+      padding: 20px;
+      margin: 0;
+    }
+    h1 {
+      text-align: center;
+    }
+    #preview-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .preview-img {
+      border: 1px solid #ccc;
+      padding: 5px;
+      background: #fff;
+      width: 180px;
+    }
+    .buttons {
+      text-align: center;
+      margin-top: 20px;
+    }
+    .buttons button {
+      padding: 10px 20px;
+      margin: 0 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #status {
+      text-align: center;
+      margin-top: 20px;
+      font-weight: bold;
+      color: green;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Generar archivo ZIP de Documentos</h1>
+  <form id="zipForm">
+    <input type="file" id="documentFiles" name="files" multiple accept="image/*" required>
+    <div class="buttons">
+      <button type="button" id="processBtn">🔍 Procesar y generar ZIP</button>
+      <button type="button" onclick="window.history.back()">🔙 Regresar</button>
+    </div>
+  </form>
+
+  <div id="preview-container"></div>
+  <div id="status"></div>
+
+  <script>
+    const fileInput = document.getElementById("documentFiles");
+    const previewContainer = document.getElementById("preview-container");
+    const processBtn = document.getElementById("processBtn");
+    const status = document.getElementById("status");
+
+    let files = [];
+
+    fileInput.addEventListener("change", () => {
+      previewContainer.innerHTML = "";
+      files = Array.from(fileInput.files);
+
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = document.createElement("img");
+          img.src = e.target.result;
+          img.className = "preview-img";
+          previewContainer.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+      });
+    });
+
+    processBtn.addEventListener("click", async () => {
+      if (files.length === 0) {
+        alert("Por favor selecciona los documentos primero.");
+        return;
+      }
+
+      status.textContent = "🔍 Extrayendo nombre del trabajador desde el INE...";
+      const ineFile = files.find(f => f.name.toLowerCase().includes("ine"));
+      if (!ineFile) {
+        alert("No se encontró una imagen de INE. Asegúrate de nombrarla como 'ine_nombre.png'");
+        return;
+      }
+
+      const ineText = await extractTextFromImage(ineFile);
+      const nombreTrabajador = parseNameFromINE(ineText);
+      if (!nombreTrabajador) {
+        alert("No se pudo extraer el nombre del INE.");
+        return;
+      }
+
+      const zip = new JSZip();
+      const fecha = new Date();
+      const fechaStr = `${fecha.getDate()}-${fecha.getMonth() + 1}-${fecha.getFullYear()}`;
+      const zipFileName = `${nombreTrabajador}_${fechaStr}.zip`;
+
+      status.textContent = "📦 Generando archivo ZIP...";
+
+      for (const file of files) {
+        const fieldName = file.name.split("_")[0]; // ej. 'curp_foto.jpg'
+        const renamed = `${fieldName}-${nombreTrabajador}.jpg`;
+        const blob = await file.arrayBuffer();
+        zip.file(renamed, blob);
+      }
+
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(zipBlob);
+      link.download = zipFileName;
+      link.textContent = `📥 Descargar ZIP: ${zipFileName}`;
+      link.style.display = "block";
+      link.style.textAlign = "center";
+      link.style.marginTop = "20px";
+
+      status.textContent = "✅ ZIP generado exitosamente:";
+      document.body.appendChild(link);
+    });
+
+    async function extractTextFromImage(file) {
+      const img = await file.arrayBuffer();
+      const blob = new Blob([img]);
+      const dataUrl = URL.createObjectURL(blob);
+      const { data: { text } } = await Tesseract.recognize(dataUrl, 'spa', {
+        logger: m => console.log(m)
+      });
+      return text;
+    }
+
+    function parseNameFromINE(text) {
+      const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+      const nombreLine = lines.find(line =>
+        /^[A-ZÁÉÍÓÚÑ\s]{5,}$/.test(line) && line.split(' ').length >= 2
+      );
+      if (!nombreLine) return null;
+      return nombreLine.replace(/\s+/g, '');
+    }
+  </script>
+
+</body>
+</html>
