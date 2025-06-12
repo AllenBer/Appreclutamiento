@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Documentos Escaneados</title>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f4f4;
+      padding: 20px;
+    }
+
+    h1, h2 {
+      text-align: center;
+    }
+
+    #nombreTrabajador {
+      text-align: center;
+      font-size: 20px;
+      color: #333;
+      margin-top: 10px;
+    }
+
+    #imagenesContainer {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+      margin-top: 30px;
+    }
+
+    .imagenItem {
+      text-align: center;
+    }
+
+    .imagenItem img {
+      max-width: 200px;
+      border: 2px solid #ddd;
+      border-radius: 10px;
+    }
+
+    .imagenItem span {
+      display: block;
+      margin-top: 5px;
+      font-weight: bold;
+    }
+
+    #botones {
+      text-align: center;
+      margin-top: 40px;
+    }
+
+    button {
+      padding: 12px 25px;
+      font-size: 16px;
+      margin: 0 15px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      background: #2d89ef;
+      color: white;
+    }
+
+    button:hover {
+      background-color: #1b5cb5;
+    }
+
+    #descargaLink {
+      display: block;
+      text-align: center;
+      margin-top: 25px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Documentos Escaneados</h1>
+  <div id="nombreTrabajador">🔍 Analizando INE para extraer nombre...</div>
+
+  <div id="imagenesContainer"></div>
+
+  <div id="botones">
+    <button onclick="regresar()">🔁 Regresar</button>
+    <button onclick="generarZip()">📦 Generar ZIP</button>
+  </div>
+
+  <div id="descargaLink"></div>
+
+  <script>
+    const contenedor = document.getElementById('imagenesContainer');
+    const nombreTrabajadorDiv = document.getElementById('nombreTrabajador');
+    const descargaLink = document.getElementById('descargaLink');
+
+    let imagenes = []; // { nombreCampo: 'INE', dataUrl: '...' }
+    let nombreTrabajador = 'Desconocido';
+
+    // 🔄 Recuperar imágenes desde sessionStorage
+    window.onload = async function () {
+      const datos = sessionStorage.getItem('imagenesEscaneadas');
+      if (!datos) {
+        alert("No se encontraron imágenes escaneadas.");
+        return;
+      }
+
+      imagenes = JSON.parse(datos); // [{ campo: 'INE', dataUrl: 'data:image/jpeg;base64,...' }, ...]
+
+      // Mostrar imágenes
+      imagenes.forEach(img => {
+        const div = document.createElement('div');
+        div.className = 'imagenItem';
+
+        const image = document.createElement('img');
+        image.src = img.dataUrl;
+
+        const label = document.createElement('span');
+        label.textContent = img.campo;
+
+        div.appendChild(image);
+        div.appendChild(label);
+        contenedor.appendChild(div);
+      });
+
+      // OCR sobre INE
+      const ine = imagenes.find(i => i.campo.toLowerCase().includes('ine'));
+      if (ine) {
+        const texto = await Tesseract.recognize(ine.dataUrl, 'spa');
+        nombreTrabajador = extraerNombre(texto.data.text);
+        nombreTrabajadorDiv.textContent = `👤 Trabajador: ${nombreTrabajador}`;
+      } else {
+        nombreTrabajadorDiv.textContent = "⚠️ No se encontró INE para extraer nombre.";
+      }
+    };
+
+    function extraerNombre(texto) {
+      const lineas = texto.split('\n').map(l => l.trim()).filter(l => /^[A-ZÁÉÍÓÚÑ\s]{5,}$/.test(l));
+      const posibleNombre = lineas.find(l => l.split(' ').length >= 2);
+      return posibleNombre ? posibleNombre.replace(/\s+/g, '') : 'NombreDesconocido';
+    }
+
+    function regresar() {
+      window.location.href = 'escaneo.html'; // Cambiar al nombre real de tu primera página
+    }
+
+    async function generarZip() {
+      const zip = new JSZip();
+      const fecha = new Date();
+      const fechaTexto = `${fecha.getDate()}-${fecha.getMonth() + 1}-${fecha.getFullYear()}`;
+      const nombreZip = `${nombreTrabajador}_${fechaTexto}.zip`;
+
+      for (const img of imagenes) {
+        const nombreArchivo = `${img.campo}-${nombreTrabajador}.jpg`;
+        const base64 = img.dataUrl.split(',')[1];
+        const binario = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+        zip.file(nombreArchivo, binario);
+      }
+
+      const blob = await zip.generateAsync({ type: "blob" });
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = nombreZip;
+      link.textContent = `⬇️ Descargar ZIP: ${nombreZip}`;
+      descargaLink.innerHTML = '';
+      descargaLink.appendChild(link);
+    }
+  </script>
+
+</body>
+</html>
