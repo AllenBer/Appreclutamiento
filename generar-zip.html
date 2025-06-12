@@ -1,173 +1,225 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Documentos Escaneados</title>
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Generar ZIP</title>
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
+      font-family: Arial, sans-serif;
       background: #f4f4f4;
       padding: 20px;
     }
 
-    h1, h2 {
+    h1 {
       text-align: center;
+      margin-bottom: 20px;
     }
 
-    #nombreTrabajador {
-      text-align: center;
-      font-size: 20px;
-      color: #333;
-      margin-top: 10px;
-    }
-
-    #imagenesContainer {
-      display: flex;
-      flex-wrap: wrap;
+    #preview-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
       gap: 20px;
-      justify-content: center;
-      margin-top: 30px;
     }
 
-    .imagenItem {
-      text-align: center;
-    }
-
-    .imagenItem img {
-      max-width: 200px;
-      border: 2px solid #ddd;
+    .preview-item {
+      background: white;
+      padding: 10px;
       border-radius: 10px;
-    }
-
-    .imagenItem span {
-      display: block;
-      margin-top: 5px;
-      font-weight: bold;
-    }
-
-    #botones {
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
       text-align: center;
-      margin-top: 40px;
     }
 
-    button {
-      padding: 12px 25px;
-      font-size: 16px;
-      margin: 0 15px;
-      border: none;
+    .preview-item img {
+      max-width: 100%;
       border-radius: 6px;
-      cursor: pointer;
-      background: #2d89ef;
-      color: white;
     }
 
-    button:hover {
-      background-color: #1b5cb5;
-    }
-
-    #descargaLink {
-      display: block;
+    .buttons {
+      margin-top: 30px;
       text-align: center;
-      margin-top: 25px;
-      font-weight: bold;
+    }
+
+    .buttons button {
+      padding: 12px 20px;
+      margin: 10px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .primary { background: #4CAF50; color: white; }
+    .secondary { background: #ccc; color: black; }
+    .whatsapp { background: #25D366; color: white; }
+    .email { background: #0072c6; color: white; }
+    .drive { background: #fbbc05; color: black; }
+    .inicio { background: #673ab7; color: white; display: none; }
+
+    #mensajeExito {
+      margin-top: 30px;
+      padding: 15px;
+      background-color: #e8f5e9;
+      border: 1px solid #4CAF50;
+      border-radius: 8px;
+      text-align: center;
+      display: none;
+    }
+
+    #listaDocs {
+      margin-top: 10px;
+      text-align: left;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    #listaDocs ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    #listaDocs li {
+      background: #fff;
+      margin: 5px 0;
+      padding: 8px 12px;
+      border-radius: 6px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
     }
   </style>
 </head>
 <body>
 
-  <h1>Documentos Escaneados</h1>
-  <div id="nombreTrabajador">🔍 Analizando INE para extraer nombre...</div>
+  <h1>Vista previa de documentos escaneados</h1>
+  <div id="preview-container"></div>
 
-  <div id="imagenesContainer"></div>
-
-  <div id="botones">
-    <button onclick="regresar()">🔁 Regresar</button>
-    <button onclick="generarZip()">📦 Generar ZIP</button>
+  <div class="buttons">
+    <button class="secondary" id="btnRegresar">⬅️ Regresar</button>
+    <button class="primary" id="btnGenerarZIP">📁 Generar ZIP</button>
+    <button class="whatsapp" id="btnWhatsApp">📤 Compartir por WhatsApp</button>
+    <button class="email" id="btnEmail">✉️ Enviar por correo</button>
+    <button class="drive" id="btnDrive">☁️ Subir a Google Drive</button>
+    <button class="inicio" id="btnInicio">🏠 Volver al inicio</button>
   </div>
 
-  <div id="descargaLink"></div>
+  <div id="mensajeExito">
+    <h3>✅ ZIP generado exitosamente</h3>
+    <div id="listaDocs">
+      <strong>Documentos incluidos:</strong>
+      <ul id="listaDocumentos"></ul>
+    </div>
+  </div>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script>
-    const contenedor = document.getElementById('imagenesContainer');
-    const nombreTrabajadorDiv = document.getElementById('nombreTrabajador');
-    const descargaLink = document.getElementById('descargaLink');
+    const imagenes = JSON.parse(localStorage.getItem("imagenesEscaneadas") || "{}");
+    const origen = localStorage.getItem("origen") || "index.html";
+    const container = document.getElementById("preview-container");
+    const btnInicio = document.getElementById("btnInicio");
+    const mensajeExito = document.getElementById("mensajeExito");
+    const listaDocumentos = document.getElementById("listaDocumentos");
 
-    let imagenes = []; // { nombreCampo: 'INE', dataUrl: '...' }
-    let nombreTrabajador = 'Desconocido';
-
-    // 🔄 Recuperar imágenes desde sessionStorage
-    window.onload = async function () {
-      const datos = sessionStorage.getItem('imagenesEscaneadas');
-      if (!datos) {
-        alert("No se encontraron imágenes escaneadas.");
-        return;
-      }
-
-      imagenes = JSON.parse(datos); // [{ campo: 'INE', dataUrl: 'data:image/jpeg;base64,...' }, ...]
-
-      // Mostrar imágenes
-      imagenes.forEach(img => {
-        const div = document.createElement('div');
-        div.className = 'imagenItem';
-
-        const image = document.createElement('img');
-        image.src = img.dataUrl;
-
-        const label = document.createElement('span');
-        label.textContent = img.campo;
-
-        div.appendChild(image);
-        div.appendChild(label);
-        contenedor.appendChild(div);
-      });
-
-      // OCR sobre INE
-      const ine = imagenes.find(i => i.campo.toLowerCase().includes('ine'));
-      if (ine) {
-        const texto = await Tesseract.recognize(ine.dataUrl, 'spa');
-        nombreTrabajador = extraerNombre(texto.data.text);
-        nombreTrabajadorDiv.textContent = `👤 Trabajador: ${nombreTrabajador}`;
-      } else {
-        nombreTrabajadorDiv.textContent = "⚠️ No se encontró INE para extraer nombre.";
-      }
-    };
-
-    function extraerNombre(texto) {
-      const lineas = texto.split('\n').map(l => l.trim()).filter(l => /^[A-ZÁÉÍÓÚÑ\s]{5,}$/.test(l));
-      const posibleNombre = lineas.find(l => l.split(' ').length >= 2);
-      return posibleNombre ? posibleNombre.replace(/\s+/g, '') : 'NombreDesconocido';
+    if (Object.keys(imagenes).length === 0) {
+      alert("No hay documentos escaneados.");
+      window.location.href = origen;
     }
 
-    function regresar() {
-      window.location.href = 'escaneo.html'; // Cambiar al nombre real de tu primera página
+    Object.entries(imagenes).forEach(([docType, url]) => {
+      const item = document.createElement("div");
+      item.className = "preview-item";
+      item.innerHTML = `<strong>${docType}</strong><br><img src="${url}" alt="${docType}">`;
+      container.appendChild(item);
+    });
+
+    function extraerNombreDesdeINE() {
+      const ineUrl = imagenes["INE"] || imagenes["Identificación"] || null;
+      if (!ineUrl) return "Trabajador";
+      const match = ineUrl.match(/\/([^/]+)\.jpg|jpeg|png/i);
+      if (match) return match[1].split("_")[0] || "Trabajador";
+      return "Trabajador";
     }
 
-    async function generarZip() {
+    let zipBlob = null;
+    let nombreZip = "";
+
+    async function generarZIP() {
       const zip = new JSZip();
+      const nombreTrabajador = extraerNombreDesdeINE();
       const fecha = new Date();
-      const fechaTexto = `${fecha.getDate()}-${fecha.getMonth() + 1}-${fecha.getFullYear()}`;
-      const nombreZip = `${nombreTrabajador}_${fechaTexto}.zip`;
+      nombreZip = `${nombreTrabajador}_${fecha.getMonth() + 1}-${fecha.getDate()}-${fecha.getFullYear()}.zip`;
 
-      for (const img of imagenes) {
-        const nombreArchivo = `${img.campo}-${nombreTrabajador}.jpg`;
-        const base64 = img.dataUrl.split(',')[1];
-        const binario = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
-        zip.file(nombreArchivo, binario);
+      const carpeta = zip.folder(nombreTrabajador);
+      listaDocumentos.innerHTML = "";
+
+      for (const [docType, url] of Object.entries(imagenes)) {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        const extension = blob.type.split("/")[1];
+        const filename = `${docType}_${nombreTrabajador}.${extension}`;
+        carpeta.file(filename, blob);
+
+        // Mostrar en resumen
+        const li = document.createElement("li");
+        li.textContent = filename;
+        listaDocumentos.appendChild(li);
       }
 
-      const blob = await zip.generateAsync({ type: "blob" });
-      const url = URL.createObjectURL(blob);
-
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = nombreZip;
-      link.textContent = `⬇️ Descargar ZIP: ${nombreZip}`;
-      descargaLink.innerHTML = '';
-      descargaLink.appendChild(link);
+      zipBlob = await zip.generateAsync({ type: "blob" });
+      mostrarMensajeExito();
     }
-  </script>
 
+    function mostrarMensajeExito() {
+      mensajeExito.style.display = "block";
+      btnInicio.style.display = "inline-block";
+    }
+
+    document.getElementById("btnGenerarZIP").addEventListener("click", async () => {
+      await generarZIP();
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(zipBlob);
+      a.download = nombreZip;
+      a.click();
+      localStorage.removeItem("imagenesEscaneadas");
+      localStorage.removeItem("origen");
+    });
+
+    localStorage.setItem("origen", "documentacion-general.html");
+// o
+localStorage.setItem("origen", "documentacion-empresa.html");
+
+
+    document.getElementById("btnWhatsApp").addEventListener("click", async () => {
+      if (!zipBlob) await generarZIP();
+      const file = new File([zipBlob], nombreZip, { type: "application/zip" });
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: "Documentos ZIP",
+          text: "Aquí tienes el archivo ZIP de documentos escaneados"
+        });
+        mostrarMensajeExito();
+      } else {
+        alert("Tu dispositivo no soporta compartir archivos por WhatsApp directamente.");
+      }
+    });
+
+    document.getElementById("btnEmail").addEventListener("click", () => {
+      const subject = encodeURIComponent("Documentos escaneados");
+      const body = encodeURIComponent("Adjunto el archivo ZIP con los documentos escaneados.");
+      window.location.href = `mailto:?subject=${subject}&body=${body}`;
+      mostrarMensajeExito();
+    });
+
+    document.getElementById("btnDrive").addEventListener("click", async () => {
+      if (!zipBlob) await generarZIP();
+      alert("Funcionalidad de subida a Google Drive pendiente de integración real.");
+      mostrarMensajeExito();
+    });
+
+    btnInicio.addEventListener("click", () => {
+      window.location.href = "dashboard.html";
+    });
+  </script>
 </body>
 </html>
