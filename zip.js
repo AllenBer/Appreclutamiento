@@ -1,3 +1,6 @@
+// Incluye Tesseract.js en tu HTML:
+//// <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+
 const imagenes = JSON.parse(localStorage.getItem("scannedDocs") || "{}");
 const origen = localStorage.getItem("origen") || "index.html";
 const container = document.getElementById("preview-container");
@@ -17,12 +20,35 @@ Object.entries(imagenes).forEach(([docType, url]) => {
   container.appendChild(item);
 });
 
-function extraerNombreDesdeINE() {
+// 🔑 OCR REAL con Tesseract.js
+async function extraerNombreConOCR() {
   const ineUrl = imagenes["INE"] || imagenes["Identificación"] || null;
   if (!ineUrl) return "Trabajador";
-  const match = ineUrl.match(/\/([^/]+)\.(jpg|jpeg|png)/i);
-  if (match) return match[1].split("_")[0] || "Trabajador";
-  return "Trabajador";
+
+  const result = await Tesseract.recognize(ineUrl, 'spa', {
+    logger: m => console.log(m) // Muestra progreso en consola
+  });
+
+  const texto = result.data.text;
+  const lineas = texto.split('\n').map(l => l.trim()).filter(Boolean);
+
+  let nombre = "Trabajador";
+  for (const linea of lineas) {
+    if (/NOMBRE|Nombre/i.test(linea)) {
+      const partes = linea.split(':');
+      if (partes.length > 1) {
+        nombre = partes[1].trim();
+        break;
+      }
+    }
+  }
+
+  if (nombre === "Trabajador") {
+    nombre = lineas.find(l => l.split(' ').length >= 2 && l.length > 5) || "Trabajador";
+  }
+
+  // Limpia caracteres no permitidos para nombre de archivo
+  return nombre.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, "").trim();
 }
 
 let zipBlob = null;
@@ -30,7 +56,7 @@ let nombreZip = "";
 
 async function generarZIP() {
   const zip = new JSZip();
-  const nombreTrabajador = extraerNombreDesdeINE();
+  const nombreTrabajador = await extraerNombreConOCR();
   const fecha = new Date();
   nombreZip = `${nombreTrabajador}_${fecha.getMonth() + 1}-${fecha.getDate()}-${fecha.getFullYear()}.zip`;
 
