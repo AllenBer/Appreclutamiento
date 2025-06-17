@@ -1,0 +1,81 @@
+body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    #preview-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 20px;
+    }
+
+    .preview-item {
+      background: white;
+      padding: 10px;
+      border-radius: 10px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    .preview-item img {
+      max-width: 100%;
+      border-radius: 6px;
+    }
+
+    .buttons {
+      margin-top: 30px;
+      text-align: center;
+    }
+
+    .buttons button {
+      padding: 12px 20px;
+      margin: 10px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .primary { background: #4CAF50; color: white; }
+    .secondary { background: #ccc; color: black; }
+    .whatsapp { background: #25D366; color: white; }
+    .email { background: #0072c6; color: white; }
+    .drive { background: #fbbc05; color: black; }
+    .inicio { background: #673ab7; color: white; display: none; }
+
+    #mensajeExito {
+      margin-top: 30px;
+      padding: 15px;
+      background-color: #e8f5e9;
+      border: 1px solid #4CAF50;
+      border-radius: 8px;
+      text-align: center;
+      display: none;
+    }
+
+    #listaDocs {
+      margin-top: 10px;
+      text-align: left;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    #listaDocs ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    #listaDocs li {
+      background: #fff;
+      margin: 5px 0;
+      padding: 8px 12px;
+      border-radius: 6px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }

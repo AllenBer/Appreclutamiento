@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Generar ZIP</title>
+  <link rel="stylesheet" href="genenrarzip.css">
+</head>
+<body>
+
+  <h1>Vista previa de documentos escaneados</h1>
+  <div id="preview-container"></div>
+
+  <div class="buttons">
+    <button class="secondary" id="btnRegresar">⬅️ Regresar</button>
+    <button class="primary" id="btnGenerarZIP">📁 Generar ZIP</button>
+    <button class="whatsapp" id="btnWhatsApp">📤 Compartir por WhatsApp</button>
+    <button class="email" id="btnEmail">✉️ Enviar por correo</button>
+    <button class="drive" id="btnDrive">☁️ Subir a Google Drive</button>
+    <button class="inicio" id="btnInicio">🏠 Volver al inicio</button>
+  </div>
+
+  <div id="mensajeExito">
+    <h3>✅ ZIP generado exitosamente</h3>
+    <div id="listaDocs">
+      <strong>Documentos incluidos:</strong>
+      <ul id="listaDocumentos"></ul>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="zip.js"></script>
+</body>
+</html>
