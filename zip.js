@@ -1,18 +1,21 @@
-// Incluye Tesseract.js en tu HTML:
-//// <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
-
+// ✅ Recuperar datos guardados
 const imagenes = JSON.parse(localStorage.getItem("scannedDocs") || "{}");
-const origen = localStorage.getItem("origen") || "index.html";
+const origen = localStorage.getItem("origen") || "documentacion-general.html";
+
+// ✅ Elementos del DOM
 const container = document.getElementById("preview-container");
+// ✅ Esto siempre se ejecuta al cargar el script:
 const btnInicio = document.getElementById("btnInicio");
 const mensajeExito = document.getElementById("mensajeExito");
 const listaDocumentos = document.getElementById("listaDocumentos");
 
+// ✅ Validar que haya documentos
 if (Object.keys(imagenes).length === 0) {
   alert("No hay documentos escaneados.");
   window.location.href = origen;
 }
 
+// ✅ Mostrar vista previa de documentos
 Object.entries(imagenes).forEach(([docType, url]) => {
   const item = document.createElement("div");
   item.className = "preview-item";
@@ -20,7 +23,7 @@ Object.entries(imagenes).forEach(([docType, url]) => {
   container.appendChild(item);
 });
 
-// 🔑 OCR REAL con Tesseract.js
+// ✅ OCR REAL con Tesseract.js para obtener nombre del trabajador
 async function extraerNombreConOCR() {
   const ineUrl = imagenes["INE"] || imagenes["Identificación"] || null;
   if (!ineUrl) return "Trabajador";
@@ -47,13 +50,14 @@ async function extraerNombreConOCR() {
     nombre = lineas.find(l => l.split(' ').length >= 2 && l.length > 5) || "Trabajador";
   }
 
-  // Limpia caracteres no permitidos para nombre de archivo
+  // Limpiar caracteres inválidos
   return nombre.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, "").trim();
 }
 
 let zipBlob = null;
 let nombreZip = "";
 
+// ✅ Generar ZIP con nombre OCR
 async function generarZIP() {
   const zip = new JSZip();
   const nombreTrabajador = await extraerNombreConOCR();
@@ -79,11 +83,13 @@ async function generarZIP() {
   mostrarMensajeExito();
 }
 
+// ✅ Mostrar mensaje de éxito y botón Inicio
 function mostrarMensajeExito() {
   mensajeExito.style.display = "block";
   btnInicio.style.display = "inline-block";
 }
 
+// ✅ BOTÓN: Generar ZIP y descargarlo
 document.getElementById("btnGenerarZIP").addEventListener("click", async () => {
   await generarZIP();
   const a = document.createElement("a");
@@ -94,10 +100,12 @@ document.getElementById("btnGenerarZIP").addEventListener("click", async () => {
   localStorage.removeItem("origen");
 });
 
+// ✅ BOTÓN: Regresar a página de escaneo correcta (empresa o general)
 document.getElementById("btnRegresar").addEventListener("click", () => {
   window.location.href = origen;
 });
 
+// ✅ BOTÓN: Compartir por WhatsApp (usando Web Share API)
 document.getElementById("btnWhatsApp").addEventListener("click", async () => {
   if (!zipBlob) await generarZIP();
   const file = new File([zipBlob], nombreZip, { type: "application/zip" });
@@ -114,6 +122,7 @@ document.getElementById("btnWhatsApp").addEventListener("click", async () => {
   }
 });
 
+// ✅ BOTÓN: Enviar por Email (abre cliente de correo)
 document.getElementById("btnEmail").addEventListener("click", () => {
   const subject = encodeURIComponent("Documentos escaneados");
   const body = encodeURIComponent("Adjunto el archivo ZIP con los documentos escaneados.");
@@ -121,12 +130,23 @@ document.getElementById("btnEmail").addEventListener("click", () => {
   mostrarMensajeExito();
 });
 
+// ✅ BOTÓN: Subir a Google Drive (pendiente)
 document.getElementById("btnDrive").addEventListener("click", async () => {
   if (!zipBlob) await generarZIP();
   alert("Funcionalidad de subida a Google Drive pendiente de integración real.");
   mostrarMensajeExito();
 });
 
+
+
+// ✅ Al mostrar éxito, muestra el botón:
+function mostrarMensajeExito() {
+  mensajeExito.style.display = "block";
+  btnInicio.style.display = "inline-block";
+}
+
+// ✅ Asegura que siempre lleva a dashboard:
 btnInicio.addEventListener("click", () => {
+  console.log("Botón Inicio clickeado! Redirigiendo...");
   window.location.href = "dashboard.html";
 });
