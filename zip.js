@@ -1,52 +1,34 @@
 document.addEventListener("DOMContentLoaded", () => {
-  // ✅ Recuperar datos guardados
   const imagenes = JSON.parse(localStorage.getItem("scannedDocs") || "{}");
   const origen = localStorage.getItem("origen") || "documentacion-general.html";
 
-  // ✅ Elementos del DOM
-  const container = document.getElementById("preview-container");
-  const btnInicio = document.getElementById("btnInicio");
-  const btnGenerarZIP = document.getElementById("btnGenerarZIP");
-  const btnRegresar = document.getElementById("btnRegresar");
-  const btnWhatsApp = document.getElementById("btnWhatsApp");
-  const btnEmail = document.getElementById("btnEmail");
-  const mensajeExito = document.getElementById("mensajeExito");
-  const listaDocumentos = document.getElementById("listaDocumentos");
-
-  // ✅ Validar que haya documentos
-  if (Object.keys(imagenes).length === 0) {
-    alert("No hay documentos escaneados.");
-    window.location.href = origen;
+  // ✅ Validar documento obligatorio según página
+  let docObligatorio = "";
+  if (origen.includes("empresa")) {
+    docObligatorio = "Contrato laboral";
+  } else {
+    docObligatorio = "INE";
   }
 
-  // ✅ Mostrar vista previa de documentos
-  Object.entries(imagenes).forEach(([docType, url]) => {
-    const item = document.createElement("div");
-    item.className = "preview-item";
-    item.innerHTML = `<strong>${docType}</strong><br><img src="${url}" alt="${docType}">`;
-    container.appendChild(item);
-  });
+  if (!imagenes[docObligatorio]) {
+    alert(`Debes escanear el documento obligatorio: ${docObligatorio}`);
+    window.location.href = origen;
+    return;
+  }
 
-  // ✅ OCR con Tesseract.js para nombre del trabajador
+  // ✅ OCR dinámico según documento obligatorio
   async function extraerNombreConOCR() {
-    const ineUrl = imagenes["INE"] || imagenes["Identificación"] || null;
-    if (!ineUrl) return "Trabajador";
-
-    const result = await Tesseract.recognize(ineUrl, 'spa', {
-      logger: m => console.log(m)
-    });
-
+    const docUrl = imagenes[docObligatorio];
+    const result = await Tesseract.recognize(docUrl, 'spa');
     const texto = result.data.text;
-    const lineas = texto.split('\n').map(l => l.trim()).filter(Boolean);
 
     let nombre = "Trabajador";
+    const lineas = texto.split('\n').map(l => l.trim()).filter(Boolean);
+
     for (const linea of lineas) {
-      if (/NOMBRE|Nombre/i.test(linea)) {
-        const partes = linea.split(':');
-        if (partes.length > 1) {
-          nombre = partes[1].trim();
-          break;
-        }
+      if (/NOMBRE/i.test(linea)) {
+        nombre = linea.split(':').pop().trim();
+        break;
       }
     }
 
@@ -60,7 +42,6 @@ document.addEventListener("DOMContentLoaded", () => {
   let zipBlob = null;
   let nombreZip = "";
 
-  // ✅ Generar ZIP con nombre OCR
   async function generarZIP() {
     const zip = new JSZip();
     const nombreTrabajador = await extraerNombreConOCR();
@@ -68,32 +49,23 @@ document.addEventListener("DOMContentLoaded", () => {
     nombreZip = `${nombreTrabajador}_${fecha.getMonth() + 1}-${fecha.getDate()}-${fecha.getFullYear()}.zip`;
 
     const carpeta = zip.folder(nombreTrabajador);
-    listaDocumentos.innerHTML = "";
-
     for (const [docType, url] of Object.entries(imagenes)) {
       const response = await fetch(url);
       const blob = await response.blob();
-      const extension = blob.type.split("/")[1];
-      const filename = `${docType}_${nombreTrabajador}.${extension}`;
-      carpeta.file(filename, blob);
-
-      const li = document.createElement("li");
-      li.textContent = filename;
-      listaDocumentos.appendChild(li);
+      const ext = blob.type.split("/")[1];
+      carpeta.file(`${docType}_${nombreTrabajador}.${ext}`, blob);
     }
 
     zipBlob = await zip.generateAsync({ type: "blob" });
     mostrarMensajeExito();
   }
 
-  // ✅ Mostrar mensaje de éxito y botón Inicio
   function mostrarMensajeExito() {
-    mensajeExito.style.display = "block";
-    btnInicio.style.display = "inline-block";
+    document.getElementById("mensajeExito").style.display = "block";
+    document.getElementById("btnInicio").style.display = "inline-block";
   }
 
-  // ✅ BOTÓN: Generar ZIP y descargarlo
-  btnGenerarZIP.addEventListener("click", async () => {
+  document.getElementById("btnGenerarZIP").addEventListener("click", async () => {
     await generarZIP();
     const a = document.createElement("a");
     a.href = URL.createObjectURL(zipBlob);
@@ -103,22 +75,11 @@ document.addEventListener("DOMContentLoaded", () => {
     localStorage.removeItem("origen");
   });
 
-  // ✅ BOTÓN: Regresar a la página de escaneo correcta
-  btnRegresar.addEventListener("click", () => {
-    if (origen.includes("empresa")) {
-      window.location.href = "documentacion-empresa.html";
-    } else {
-      window.location.href = "documentacion-general.html";
-    }
+  document.getElementById("btnRegresar").addEventListener("click", () => {
+    window.location.href = origen;
   });
 
-  // ✅ BOTÓN: Volver al inicio
-  btnInicio.addEventListener("click", () => {
-    window.location.href = "dashboard.html";
-  });
-
-  // ✅ BOTÓN: Compartir por WhatsApp
-  btnWhatsApp.addEventListener("click", async () => {
+  document.getElementById("btnWhatsApp").addEventListener("click", async () => {
     if (!zipBlob) await generarZIP();
     const file = new File([zipBlob], nombreZip, { type: "application/zip" });
 
@@ -134,11 +95,27 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // ✅ BOTÓN: Enviar por Email
-  btnEmail.addEventListener("click", () => {
+  document.getElementById("btnEmail").addEventListener("click", async () => {
+    if (!zipBlob) await generarZIP();
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(zipBlob);
+    a.download = nombreZip;
+    a.click();
+
     const subject = encodeURIComponent("Documentos escaneados");
-    const body = encodeURIComponent("Adjunto el archivo ZIP con los documentos escaneados.");
+    const body = encodeURIComponent(
+      `Hola,\n\nTe adjunto el archivo ZIP descargado desde la página.\n\nPor favor revisa el archivo en tu carpeta de descargas y adjúntalo manualmente si no aparece automáticamente.\n\nSaludos.`
+    );
     window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  });
+
+  document.getElementById("btnDrive").addEventListener("click", async () => {
+    if (!zipBlob) await generarZIP();
+    alert("Funcionalidad de subida a Google Drive pendiente de integración real.");
     mostrarMensajeExito();
+  });
+
+  document.getElementById("btnInicio").addEventListener("click", () => {
+    window.location.href = "dashboard.html";
   });
 });
