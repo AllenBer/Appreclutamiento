@@ -75,11 +75,7 @@ h1 {
 .whatsapp { background: #25D366; color: #fff; }
 .email { background: #0072c6; color: #fff; }
 .drive { background: #fbbc05; color: #333; }
-.inicio {
-  background: #673ab7;
-  color: #fff;
-  display: none; /* Oculto al inicio */
-}
+.inicio {background: #673ab7;color: #fff;padding: 10px 20px;}
 
 
 /* Éxito */
