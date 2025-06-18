@@ -75,7 +75,12 @@ h1 {
 .whatsapp { background: #25D366; color: #fff; }
 .email { background: #0072c6; color: #fff; }
 .drive { background: #fbbc05; color: #333; }
-.inicio { background: #673ab7; color: #fff; display: none; }
+.inicio {
+  background: #673ab7;
+  color: #fff;
+  display: none; /* Oculto al inicio */
+}
+
 
 /* Éxito */
 #mensajeExito {
@@ -116,3 +121,4 @@ h1 {
 #btnInicio {
   margin-top: 20px;
 }
+
