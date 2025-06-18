@@ -2,7 +2,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // ✅ Recuperar datos guardados
   const imagenes = JSON.parse(localStorage.getItem("scannedDocs") || "{}");
   const origen = localStorage.getItem("origen") || "documentacion-general.html";
-
   // ✅ Elementos del DOM
   const container = document.getElementById("preview-container");
   const btnInicio = document.getElementById("btnInicio");
@@ -11,8 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnWhatsApp = document.getElementById("btnWhatsApp");
   const btnEmail = document.getElementById("btnEmail");
   const mensajeExito = document.getElementById("mensajeExito");
-  const listaDocumentos = document.getElementById("listaDocumentos");
-
+  const listaDocumentos = document.getElementById("listaDocumentos")
   // ✅ Documento obligatorio dinámico
   let docObligatorio = "";
   if (origen.includes("empresa")) {
@@ -91,7 +89,6 @@ document.addEventListener("DOMContentLoaded", () => {
     zipBlob = await zip.generateAsync({ type: "blob" });
     mostrarMensajeExito();
   }
-
   // ✅ Mostrar mensaje de éxito y botón Inicio
   function mostrarMensajeExito() {
     mensajeExito.style.display = "block";
@@ -99,13 +96,14 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ✅ BOTÓN: Generar ZIP y descargarlo
-  btnGenerarZIP.addEventListener("click", async () => {
-    await generarZIP();
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(zipBlob);
-    a.download = nombreZip;
-    a.click();
-  });
+btnGenerarZIP.addEventListener("click", async () => {
+  if (!zipBlob) await generarZIP();
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(zipBlob);
+  a.download = nombreZip;
+  a.click();
+});
+
 
   // ✅ BOTÓN: Regresar a la página de escaneo correcta
   btnRegresar.addEventListener("click", () => {
@@ -124,34 +122,34 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // ✅ BOTÓN: Compartir por WhatsApp
-  btnWhatsApp.addEventListener("click", async () => {
-    if (!zipBlob) await generarZIP();
-    const file = new File([zipBlob], nombreZip, { type: "application/zip" });
+btnWhatsApp.addEventListener("click", async () => {
+  if (!zipBlob) await generarZIP();
+  const file = new File([zipBlob], nombreZip, { type: "application/zip" });
 
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({
-        files: [file],
-        title: "Documentos ZIP",
-        text: "Aquí tienes el archivo ZIP de documentos escaneados"
-      });
-      mostrarMensajeExito();
-    } else {
-      alert("Tu dispositivo no soporta compartir archivos por WhatsApp directamente.");
-    }
-  });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    await navigator.share({
+      files: [file],
+      title: "Documentos ZIP",
+      text: "Aquí tienes el archivo ZIP de documentos escaneados"
+    });
+    mostrarMensajeExito();
+  } else {
+    alert("Tu dispositivo no soporta compartir archivos por WhatsApp directamente.");
+  }
+});
 
-  // ✅ BOTÓN: Enviar por Email (abre mailto y descarga ZIP)
-  btnEmail.addEventListener("click", async () => {
-    if (!zipBlob) await generarZIP();
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(zipBlob);
-    a.download = nombreZip;
-    a.click();
+  // ✅ BOTÓN: Enviar por Email
+btnEmail.addEventListener("click", async () => {
+  if (!zipBlob) await generarZIP();
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(zipBlob);
+  a.download = nombreZip;
+  a.click();
 
-    const subject = encodeURIComponent("Documentos escaneados");
-    const body = encodeURIComponent(
-      `Hola,\n\nAdjunto el archivo ZIP con los documentos escaneados.\n\nSi no se adjunta automáticamente, revisa tu carpeta de descargas.\n\nSaludos.`
-    );
-    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  const subject = encodeURIComponent("Documentos escaneados");
+  const body = encodeURIComponent(
+    `Hola,\n\nAdjunto el archivo ZIP con los documentos escaneados.\n\nSi no se adjunta automáticamente, revisa tu carpeta de descargas y adjúntalo manualmente.\n\nSaludos.`
+  );
+  window.location.href = `mailto:?subject=${subject}&body=${body}`;
   });
 });
