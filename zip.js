@@ -5,9 +5,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // ✅ Validar documento obligatorio según página
   let docObligatorio = "";
   if (origen.includes("empresa")) {
-    docObligatorio = "Contrato laboral";
+    docObligatorio = "contrato_laboral";
   } else {
-    docObligatorio = "INE";
+    docObligatorio = "ine_frente";
   }
 
   if (!imagenes[docObligatorio]) {
