@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const imagenes = JSON.parse(localStorage.getItem("scannedDocs") || "{}");
   const origen = localStorage.getItem("origen") || "documentacion-general.html";
 
-  // ✅ Validar documento obligatorio según página
+  // ✅ Identifica la clave real del documento obligatorio
   let docObligatorio = "";
   if (origen.includes("empresa")) {
     docObligatorio = "contrato_laboral";
@@ -10,20 +10,23 @@ document.addEventListener("DOMContentLoaded", () => {
     docObligatorio = "ine_frente";
   }
 
+  // ✅ Validar que exista
   if (!imagenes[docObligatorio]) {
-    alert(`Debes escanear el documento obligatorio: ${docObligatorio}`);
+    alert(`Debes escanear el documento obligatorio: ${docObligatorio.replace("_", " ")}`);
     window.location.href = origen;
     return;
   }
 
-  // ✅ OCR dinámico según documento obligatorio
+  // ✅ Función OCR sobre el documento obligatorio
   async function extraerNombreConOCR() {
     const docUrl = imagenes[docObligatorio];
-    const result = await Tesseract.recognize(docUrl, 'spa');
+    const result = await Tesseract.recognize(docUrl, 'spa', {
+      logger: m => console.log(m)
+    });
     const texto = result.data.text;
+    const lineas = texto.split('\n').map(l => l.trim()).filter(Boolean);
 
     let nombre = "Trabajador";
-    const lineas = texto.split('\n').map(l => l.trim()).filter(Boolean);
 
     for (const linea of lineas) {
       if (/NOMBRE/i.test(linea)) {
