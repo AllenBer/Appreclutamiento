@@ -1,32 +1,24 @@
 document.addEventListener("DOMContentLoaded", () => {
-  // ✅ Recuperar datos guardados
-  const imagenes = JSON.parse(localStorage.getItem("scannedDocs") || "{}");
-  const origen = localStorage.getItem("origen") || "documentacion-general.html";
-  // ✅ Elementos del DOM
-  const container = document.getElementById("preview-container");
-  const btnInicio = document.getElementById("btnInicio");
   const btnGenerarZIP = document.getElementById("btnGenerarZIP");
-  const btnRegresar = document.getElementById("btnRegresar");
   const btnWhatsApp = document.getElementById("btnWhatsApp");
   const btnEmail = document.getElementById("btnEmail");
+  const descargarZip = document.getElementById("descargarZip");
   const mensajeExito = document.getElementById("mensajeExito");
-  const listaDocumentos = document.getElementById("listaDocumentos")
-  // ✅ Documento obligatorio dinámico
-  let docObligatorio = "";
-  if (origen.includes("empresa")) {
-    docObligatorio = "contrato_laboral";
-  } else {
-    docObligatorio = "ine_frente";
-  }
+  const btnInicio = document.getElementById("btnInicio");
+  const btnRegresar = document.getElementById("btnRegresar");
+  const listaDocumentos = document.getElementById("listaDocumentos");
+  const container = document.getElementById("preview-container");
+  const inputNombreManual = document.getElementById("nombreManual");
 
-  // ✅ Validar que exista
-  if (!imagenes[docObligatorio]) {
-    alert(`Debes escanear el documento obligatorio: ${docObligatorio.replace("_", " ")}`);
-    window.location.href = origen;
-    return;
-  }
+  const imagenes = JSON.parse(localStorage.getItem("scannedDocs") || "{}");
+  const origen = localStorage.getItem("origen") || "documentacion-general.html";
 
-  // ✅ Mostrar vista previa de documentos
+  const posiblesDocs = ["ine_frente", "curp", "contrato_laboral", "carta_responsiva"];
+  let zipBlob = null;
+  let nombreZip = "";
+  let nombreTrabajador = "Trabajador";
+
+  // Mostrar imágenes
   Object.entries(imagenes).forEach(([docType, url]) => {
     const item = document.createElement("div");
     item.className = "preview-item";
@@ -34,42 +26,64 @@ document.addEventListener("DOMContentLoaded", () => {
     container.appendChild(item);
   });
 
-  // ✅ OCR con Tesseract.js para nombre del trabajador
+  // Detectar nombre automáticamente con OCR
   async function extraerNombreConOCR() {
-    const docUrl = imagenes[docObligatorio];
-    const result = await Tesseract.recognize(docUrl, 'spa', { logger: m => console.log(m) });
+    for (const doc of posiblesDocs) {
+      if (imagenes[doc]) {
+        const result = await Tesseract.recognize(imagenes[doc], 'spa', {
+          logger: m => console.log(m)
+        });
 
-    const texto = result.data.text;
-    const lineas = texto.split('\n').map(l => l.trim()).filter(Boolean);
+        const texto = result.data.text;
+        const lineas = texto.split('\n').map(l => l.trim()).filter(Boolean);
 
-    let nombre = "Trabajador";
-    for (const linea of lineas) {
-      if (/NOMBRE|Nombre/i.test(linea)) {
-        const partes = linea.split(':');
-        if (partes.length > 1) {
-          nombre = partes[1].trim();
-          break;
+        for (const linea of lineas) {
+          if (/NOMBRE|Nombre/i.test(linea)) {
+            const partes = linea.split(':');
+            if (partes.length > 1) {
+              return partes[1].trim().replace(/[^a-zA-ZñÑáéíóúÁÉÍÓÚ\s]/g, "");
+            }
+          }
+        }
+
+        const posible = lineas.find(l => l.split(" ").length >= 2 && l.length > 5);
+        if (posible) {
+          return posible.replace(/[^a-zA-ZñÑáéíóúÁÉÍÓÚ\s]/g, "");
         }
       }
     }
 
-    if (nombre === "Trabajador") {
-      nombre = lineas.find(l => l.split(' ').length >= 2 && l.length > 5) || "Trabajador";
-    }
-
-    return nombre.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, "").trim();
+    return "";
   }
 
-  let zipBlob = null;
-  let nombreZip = "";
+  // Llenar input si se detecta automáticamente
+  async function intentarExtraerNombre() {
+    const nombreDetectado = await extraerNombreConOCR();
+    if (nombreDetectado) {
+      inputNombreManual.value = nombreDetectado;
+    }
+  }
 
-  // ✅ Generar ZIP con nombre OCR
-  async function generarZIP() {
-    if (zipBlob) return; // Ya existe, no regenerar
+  intentarExtraerNombre();
+
+  // Generar ZIP
+  btnGenerarZIP.onclick = async () => {
+    const nombre = inputNombreManual.value.trim();
+    if (!nombre) {
+      alert("⚠️ Por favor escribe o verifica el nombre del trabajador.");
+      return;
+    }
+
+    if (Object.keys(imagenes).length === 0) {
+      alert("No hay documentos para generar ZIP.");
+      return;
+    }
+
     const zip = new JSZip();
-    const nombreTrabajador = await extraerNombreConOCR();
     const fecha = new Date();
-    nombreZip = `${nombreTrabajador}_${fecha.getMonth() + 1}-${fecha.getDate()}-${fecha.getFullYear()}.zip`;
+    const fechaStr = `${fecha.getMonth() + 1}-${fecha.getDate()}-${fecha.getFullYear()}`;
+    nombreTrabajador = nombre.replace(/\s+/g, "");
+    nombreZip = `${nombreTrabajador}_${fechaStr}.zip`;
 
     const carpeta = zip.folder(nombreTrabajador);
     listaDocumentos.innerHTML = "";
@@ -77,79 +91,74 @@ document.addEventListener("DOMContentLoaded", () => {
     for (const [docType, url] of Object.entries(imagenes)) {
       const response = await fetch(url);
       const blob = await response.blob();
-      const extension = blob.type.split("/")[1];
-      const filename = `${docType}_${nombreTrabajador}.${extension}`;
-      carpeta.file(filename, blob);
+      const ext = blob.type.split("/")[1];
+      const nombreArchivo = `${docType}_${nombreTrabajador}.${ext}`;
+      carpeta.file(nombreArchivo, blob);
 
       const li = document.createElement("li");
-      li.textContent = filename;
+      li.textContent = nombreArchivo;
       listaDocumentos.appendChild(li);
     }
 
-    zipBlob = await zip.generateAsync({ type: "blob" });
-    mostrarMensajeExito();
-  }
-  // ✅ Mostrar mensaje de éxito y botón Inicio
-  function mostrarMensajeExito() {
-    mensajeExito.style.display = "block";
-    btnInicio.style.display = "inline-block";
-  }
+    try {
+      zipBlob = await zip.generateAsync({ type: "blob" });
 
-  // ✅ BOTÓN: Generar ZIP y descargarlo
-btnGenerarZIP.addEventListener("click", async () => {
-  if (!zipBlob) await generarZIP();
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(zipBlob);
-  a.download = nombreZip;
-  a.click();
-});
+      const zipURL = URL.createObjectURL(zipBlob);
+      descargarZip.href = zipURL;
+      descargarZip.download = nombreZip;
+      descargarZip.style.display = "inline-block";
 
+      mensajeExito.style.display = "block";
+      btnWhatsApp.disabled = false;
+      btnEmail.disabled = false;
 
-  // ✅ BOTÓN: Regresar a la página de escaneo correcta
-  btnRegresar.addEventListener("click", () => {
-    if (origen.includes("empresa")) {
-      window.location.href = "documentacion-empresa.html";
-    } else {
-      window.location.href = "documentacion-general.html";
+      alert("✅ ZIP generado correctamente.");
+    } catch (err) {
+      console.error(err);
+      alert("❌ Error al generar el ZIP.");
     }
-  });
+  };
 
-  // ✅ BOTÓN: Volver al inicio y limpiar todo
-  btnInicio.addEventListener("click", () => {
-    localStorage.removeItem("scannedDocs");
-    localStorage.removeItem("origen");
-    window.location.href = "dashboard.html";
-  });
+  // Compartir por WhatsApp
+  btnWhatsApp.onclick = () => {
+    if (!zipBlob) return alert("Primero genera el ZIP.");
+    const file = new File([zipBlob], nombreZip, { type: "application/zip" });
 
-  // ✅ BOTÓN: Compartir por WhatsApp
-btnWhatsApp.addEventListener("click", async () => {
-  if (!zipBlob) await generarZIP();
-  const file = new File([zipBlob], nombreZip, { type: "application/zip" });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({
+        files: [file],
+        title: "Documentos del Trabajador",
+        text: "Aquí está el archivo ZIP con documentos.",
+      }).catch(err => alert("Error al compartir: " + err));
+    } else {
+      alert("Tu navegador no permite compartir archivos.");
+    }
+  };
 
-  if (navigator.canShare && navigator.canShare({ files: [file] })) {
-    await navigator.share({
-      files: [file],
-      title: "Documentos ZIP",
-      text: "Aquí tienes el archivo ZIP de documentos escaneados"
-    });
-    mostrarMensajeExito();
-  } else {
-    alert("Tu dispositivo no soporta compartir archivos por WhatsApp directamente.");
-  }
-});
-
-  // ✅ BOTÓN: Enviar por Email
-btnEmail.addEventListener("click", async () => {
-  if (!zipBlob) await generarZIP();
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(zipBlob);
-  a.download = nombreZip;
-  a.click();
+  // Enviar por correo
+ // Enviar por correo
+btnEmail.onclick = () => {
+  if (!zipBlob) return alert("Primero genera el ZIP.");
 
   const subject = encodeURIComponent("Documentos escaneados");
   const body = encodeURIComponent(
-    `Hola,\n\nAdjunto el archivo ZIP con los documentos escaneados.\n\nSi no se adjunta automáticamente, revisa tu carpeta de descargas y adjúntalo manualmente.\n\nSaludos.`
+    `Hola,\n\nPuedes descargar el archivo ZIP con los documentos del trabajador ${nombreTrabajador} en el siguiente enlace:\n\n${descargarZip.href}\n\nSaludos.`
   );
   window.location.href = `mailto:?subject=${subject}&body=${body}`;
-  });
+};
+
+
+  // Navegación
+  btnRegresar.onclick = () => window.location.href = origen;
+  btnInicio.onclick = () => {
+    localStorage.removeItem("scannedDocs");
+    localStorage.removeItem("origen");
+    window.location.href = "dashboard.html";
+  };
+
+  // Estado inicial
+  btnWhatsApp.disabled = true;
+  btnEmail.disabled = true;
+  descargarZip.style.display = "none";
+  mensajeExito.style.display = "none";
 });
