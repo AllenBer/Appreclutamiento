@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentDocType = "";
   let usingBackCamera = true;
 
-  const filestackClient = filestack.init("A31q0qbd1TYip6E7pozsLz");
+  const filestackClient = filestack.init("A7II0wXa7TKix1YxL3cCRz");
 
   // Cargar datos guardados
   const scannedDocs = JSON.parse(localStorage.getItem("scannedDocs") || "{}");
