@@ -137,15 +137,27 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Enviar por correo
  // Enviar por correo
-btnEmail.onclick = () => {
+btnEmail.onclick = async () => {
   if (!zipBlob) return alert("Primero genera el ZIP.");
 
-  const subject = encodeURIComponent("Documentos escaneados");
-  const body = encodeURIComponent(
-    `Hola,\n\nPuedes descargar el archivo ZIP con los documentos del trabajador ${nombreTrabajador} en el siguiente enlace:\n\n${descargarZip.href}\n\nSaludos.`
-  );
-  window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  const storageRef = firebase.storage().ref();
+  const zipRef = storageRef.child(`documentos/${nombreZip}`);
+
+  try {
+    await zipRef.put(zipBlob);
+    const downloadURL = await zipRef.getDownloadURL();
+
+    const subject = encodeURIComponent("Documentos escaneados");
+    const body = encodeURIComponent(
+      `Hola,\n\nPuedes descargar el archivo ZIP con los documentos del trabajador ${nombreTrabajador} en el siguiente enlace:\n\n${downloadURL}\n\nSaludos.`
+    );
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  } catch (error) {
+    console.error("❌ Error al subir el archivo:", error);
+    alert("❌ No se pudo subir ni generar el enlace de descarga.");
+  }
 };
+
 
 
   // Navegación
