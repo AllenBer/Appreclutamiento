@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let usandoFrontal = false; // Cámara trasera por defecto
 
   // Inicializar cliente de Filestack
-  const filestackClient = filestack.init("A31q0qbd1TYip6E7pozsLz"); // Reemplaza por tu propia API Key si es necesario
+  const filestackClient = filestack.init("A7II0wXa7TKix1YxL3cCRz"); // Reemplaza por tu propia API Key si es necesario
 
   // Crear botón para cambiar cámara
   const switchCameraBtn = document.createElement("button");
