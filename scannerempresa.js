@@ -14,12 +14,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let currentStream = null;
   let currentDocType = "";
-  let usandoFrontal = false; // Cámara trasera por defecto
+  let usandoFrontal = false;
 
-  // Inicializar cliente de Filestack
-  const filestackClient = filestack.init("A7II0wXa7TKix1YxL3cCRz"); // Reemplaza por tu propia API Key si es necesario
+  const filestackClient = filestack.init("A7II0wXa7TKix1YxL3cCRz");
 
-  // Crear botón para cambiar cámara
   const switchCameraBtn = document.createElement("button");
   switchCameraBtn.textContent = "🔁 Cambiar cámara";
   switchCameraBtn.className = "btn-capture";
@@ -28,6 +26,9 @@ document.addEventListener("DOMContentLoaded", () => {
     startCamera(usandoFrontal ? "user" : "environment");
   });
   beforeCapture.insertBefore(switchCameraBtn, captureBtn);
+
+  // Cargar documentos previos si los hay
+  const scannedDocs = JSON.parse(localStorage.getItem("scannedDocsEmpresa") || "{}");
 
   scanButtons.forEach(button => {
     button.addEventListener("click", () => {
@@ -88,7 +89,6 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   acceptBtn.addEventListener("click", async () => {
-    // Convertir imagen a archivo y subirla
     const file = await fetch(capturedImage.src)
       .then(res => res.blob())
       .then(blob => new File([blob], `${currentDocType}.jpg`, { type: "image/jpeg" }));
@@ -110,6 +110,13 @@ document.addEventListener("DOMContentLoaded", () => {
         previewContainer.appendChild(img);
         statusIcon.textContent = "✅";
       }
+
+      // Guardar en localStorage
+      scannedDocs[currentDocType] = fileUrl;
+      localStorage.setItem("scannedDocsEmpresa", JSON.stringify(scannedDocs));
+
+      // Guardar origen actual
+      localStorage.setItem("origen", "documentacion-empresa.html");
 
       closeScanner();
     }).catch(err => {
