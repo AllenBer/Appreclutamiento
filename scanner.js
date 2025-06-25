@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const filestackClient = filestack.init("A7II0wXa7TKix1YxL3cCRz");
 
   // Cargar datos guardados
-  const scannedDocs = JSON.parse(localStorage.getItem("scannedDocs") || "{}");
+  const scannedDocs = JSON.parse(localStorage.getItem("scannedDocsGeneral") || "{}");
   let trabajadorNombre = localStorage.getItem("trabajadorNombre") || "";
 
   scanButtons.forEach(button => {
@@ -111,7 +111,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Guardar en localStorage
       scannedDocs[currentDocType] = fileUrl;
-      localStorage.setItem("scannedDocs", JSON.stringify(scannedDocs));
+      localStorage.setItem("scannedDocsGeneral", JSON.stringify(scannedDocs));
+
+      // Guardar origen actual
+      localStorage.setItem("origen", "documentacion-general.html");
 
       // Si es INE, ejecutar OCR y guardar nombre
       if (currentDocType.toLowerCase().includes("ine")) {
@@ -158,7 +161,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const data = await response.json();
       const texto = data.text || "";
 
-      // Buscar el nombre en el OCR (puedes adaptar esta expresión si lo necesitas)
       const nombreEncontrado = texto.match(/(?<=NOMBRE\s?)[A-ZÁÉÍÓÚÑ ]{10,}/i);
       if (nombreEncontrado) {
         console.log("Nombre detectado:", nombreEncontrado[0].trim());
