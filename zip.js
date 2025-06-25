@@ -10,8 +10,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const container = document.getElementById("preview-container");
   const inputNombreManual = document.getElementById("nombreManual");
 
-  const imagenes = JSON.parse(localStorage.getItem("scannedDocs") || "{}");
   const origen = localStorage.getItem("origen") || "documentacion-general.html";
+  const imagenes = JSON.parse(localStorage.getItem(
+    origen.includes("empresa") ? "scannedDocsEmpresa" : "scannedDocsGeneral"
+  ) || "{}");
 
   const posiblesDocs = ["ine_frente", "curp", "contrato_laboral", "carta_responsiva"];
   let zipBlob = null;
@@ -56,7 +58,6 @@ document.addEventListener("DOMContentLoaded", () => {
     return "";
   }
 
-  // Llenar input si se detecta automáticamente
   async function intentarExtraerNombre() {
     const nombreDetectado = await extraerNombreConOCR();
     if (nombreDetectado) {
@@ -136,34 +137,33 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   // Enviar por correo
- // Enviar por correo
-btnEmail.onclick = async () => {
-  if (!zipBlob) return alert("Primero genera el ZIP.");
+  btnEmail.onclick = async () => {
+    if (!zipBlob) return alert("Primero genera el ZIP.");
 
-  const storageRef = firebase.storage().ref();
-  const zipRef = storageRef.child(`documentos/${nombreZip}`);
+    const storageRef = firebase.storage().ref();
+    const zipRef = storageRef.child(`documentos/${nombreZip}`);
 
-  try {
-    await zipRef.put(zipBlob);
-    const downloadURL = await zipRef.getDownloadURL();
+    try {
+      await zipRef.put(zipBlob);
+      const downloadURL = await zipRef.getDownloadURL();
 
-    const subject = encodeURIComponent("Documentos escaneados");
-    const body = encodeURIComponent(
-      `Hola,\n\nPuedes descargar el archivo ZIP con los documentos del trabajador ${nombreTrabajador} en el siguiente enlace:\n\n${downloadURL}\n\nSaludos.`
-    );
-    window.location.href = `mailto:?subject=${subject}&body=${body}`;
-  } catch (error) {
-    console.error("❌ Error al subir el archivo:", error);
-    alert("❌ No se pudo subir ni generar el enlace de descarga.");
-  }
-};
-
-
+      const subject = encodeURIComponent("Documentos escaneados");
+      const body = encodeURIComponent(
+        `Hola,\n\nPuedes descargar el archivo ZIP con los documentos del trabajador ${nombreTrabajador} en el siguiente enlace:\n\n${downloadURL}\n\nSaludos.`
+      );
+      window.location.href = `mailto:?subject=${subject}&body=${body}`;
+    } catch (error) {
+      console.error("❌ Error al subir el archivo:", error);
+      alert("❌ No se pudo subir ni generar el enlace de descarga.");
+    }
+  };
 
   // Navegación
   btnRegresar.onclick = () => window.location.href = origen;
+
   btnInicio.onclick = () => {
-    localStorage.removeItem("scannedDocs");
+    localStorage.removeItem("scannedDocsGeneral");
+    localStorage.removeItem("scannedDocsEmpresa");
     localStorage.removeItem("origen");
     window.location.href = "dashboard.html";
   };
