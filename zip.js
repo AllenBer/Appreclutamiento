@@ -121,33 +121,31 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   // Compartir por WhatsApp
-  btnWhatsApp.onclick = async () => {
+  btnWhatsApp.onclick = () => {
   if (!zipBlob) return alert("Primero genera el ZIP.");
+  const file = new File([zipBlob], nombreZip, { type: "application/zip" });
 
-  try {
-    const file = new File([zipBlob], nombreZip, { type: "application/zip" });
-
-    const result = await filestackClient.upload(file);
-    const downloadURL = result.url;
-
-    const mensaje = encodeURIComponent(
-      `Hola, aquí tienes el ZIP con documentos del trabajador ${nombreTrabajador}:\n${downloadURL}`
-    );
-
-    window.open(`https://wa.me/?text=${mensaje}`, "_blank");
-  } catch (error) {
-    console.error("❌ Error al subir el archivo:", error);
-    alert("❌ No se pudo subir ni generar el enlace de descarga.");
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    navigator.share({
+      files: [file],
+      title: "Documentos del trabajador",
+      text: "Aquí está el archivo ZIP con documentos."
+    }).catch(err => {
+      console.error(err);
+      alert("Error al compartir: " + err.message);
+    });
+  } else {
+    alert("Tu navegador no permite compartir archivos. Intenta desde un celular Android.");
   }
 };
+
 
   // Enviar por correo
   btnEmail.onclick = async () => {
   if (!zipBlob) return alert("Primero genera el ZIP.");
+  const file = new File([zipBlob], nombreZip, { type: "application/zip" });
 
   try {
-    const file = new File([zipBlob], nombreZip, { type: "application/zip" });
-
     const result = await filestackClient.upload(file);
     const downloadURL = result.url;
 
@@ -162,6 +160,7 @@ document.addEventListener("DOMContentLoaded", () => {
     alert("❌ No se pudo subir ni generar el enlace de descarga.");
   }
 };
+
 
 
   // Navegación
