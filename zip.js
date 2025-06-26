@@ -1,3 +1,19 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-storage.js";
+
+// Tu configuración de Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyC_WhpJxW6V6C6stDeyv6wGsj4-2rR2edQ",
+  authDomain: "appreclutameinto.firebaseapp.com",
+  projectId: "appreclutameinto",
+  storageBucket: "appreclutameinto.appspot.com",
+  messagingSenderId: "447789838113",
+  appId: "1:447789838113:web:41d7c2ba5cd6bb304e5860"
+};
+
+// Inicializar Firebase
+const app = initializeApp(firebaseConfig);
+const storage = getStorage(app);
 document.addEventListener("DOMContentLoaded", () => {
   const btnGenerarZIP = document.getElementById("btnGenerarZIP");
   const btnWhatsApp = document.getElementById("btnWhatsApp");
@@ -121,21 +137,24 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   // Compartir por WhatsApp
-  btnWhatsApp.onclick = () => {
+ btnWhatsApp.onclick = async () => {
   if (!zipBlob) return alert("Primero genera el ZIP.");
-  const file = new File([zipBlob], nombreZip, { type: "application/zip" });
 
-  if (navigator.canShare && navigator.canShare({ files: [file] })) {
-    navigator.share({
-      files: [file],
-      title: "Documentos del trabajador",
-      text: "Aquí está el archivo ZIP con documentos."
-    }).catch(err => {
-      console.error(err);
-      alert("Error al compartir: " + err.message);
-    });
-  } else {
-    alert("Tu navegador no permite compartir archivos. Intenta desde un celular Android.");
+  try {
+    const file = new File([zipBlob], nombreZip, { type: "application/zip" });
+    const storageRef = ref(storage, `zips/${nombreZip}`);
+    await uploadBytes(storageRef, file);
+
+    const downloadURL = await getDownloadURL(storageRef);
+
+    const mensaje = encodeURIComponent(
+      `Hola, aquí tienes el ZIP con documentos del trabajador ${nombreTrabajador}:\n${downloadURL}`
+    );
+
+    window.open(`https://wa.me/?text=${mensaje}`, "_blank");
+  } catch (error) {
+    console.error("❌ Error al subir el archivo a Firebase:", error);
+    alert("❌ No se pudo subir ni generar el enlace de descarga.");
   }
 };
 
@@ -143,20 +162,22 @@ document.addEventListener("DOMContentLoaded", () => {
   // Enviar por correo
   btnEmail.onclick = async () => {
   if (!zipBlob) return alert("Primero genera el ZIP.");
-  const file = new File([zipBlob], nombreZip, { type: "application/zip" });
 
   try {
-    const result = await filestackClient.upload(file);
-    const downloadURL = result.url;
+    const file = new File([zipBlob], nombreZip, { type: "application/zip" });
+    const storageRef = ref(storage, `zips/${nombreZip}`);
+    await uploadBytes(storageRef, file);
 
-    const subject = encodeURIComponent("Documentos escaneados");
+    const downloadURL = await getDownloadURL(storageRef);
+
+    const subject = encodeURIComponent("Documentos del trabajador");
     const body = encodeURIComponent(
-      `Hola,\n\nPuedes descargar el archivo ZIP con los documentos del trabajador ${nombreTrabajador} en el siguiente enlace:\n\n${downloadURL}\n\nSaludos.`
+      `Hola,\n\nAdjunto el enlace para descargar el archivo ZIP con los documentos del trabajador ${nombreTrabajador}:\n${downloadURL}\n\nSaludos.`
     );
 
     window.location.href = `mailto:?subject=${subject}&body=${body}`;
   } catch (error) {
-    console.error("❌ Error al subir el archivo:", error);
+    console.error("❌ Error al subir el archivo a Firebase:", error);
     alert("❌ No se pudo subir ni generar el enlace de descarga.");
   }
 };
