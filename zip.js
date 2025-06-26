@@ -121,42 +121,49 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   // Compartir por WhatsApp
-  btnWhatsApp.onclick = () => {
-    if (!zipBlob) return alert("Primero genera el ZIP.");
-    const file = new File([zipBlob], nombreZip, { type: "application/zip" });
+  btnWhatsApp.onclick = async () => {
+  if (!zipBlob) return alert("Primero genera el ZIP.");
 
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      navigator.share({
-        files: [file],
-        title: "Documentos del Trabajador",
-        text: "Aquí está el archivo ZIP con documentos.",
-      }).catch(err => alert("Error al compartir: " + err));
-    } else {
-      alert("Tu navegador no permite compartir archivos.");
-    }
-  };
+  const storageRef = firebase.storage().ref();
+  const zipRef = storageRef.child(`documentos/${nombreZip}`);
+
+  try {
+    await zipRef.put(zipBlob);
+    const downloadURL = await zipRef.getDownloadURL();
+
+    const mensaje = encodeURIComponent(
+      `Hola, aquí tienes el ZIP con documentos del trabajador ${nombreTrabajador}:\n${downloadURL}`
+    );
+
+    window.open(`https://wa.me/?text=${mensaje}`, "_blank");
+  } catch (error) {
+    console.error("❌ Error al subir el archivo:", error);
+    alert("❌ No se pudo subir ni generar el enlace de descarga.");
+  }
+};
 
   // Enviar por correo
   btnEmail.onclick = async () => {
-    if (!zipBlob) return alert("Primero genera el ZIP.");
+  if (!zipBlob) return alert("Primero genera el ZIP.");
 
-    const storageRef = firebase.storage().ref();
-    const zipRef = storageRef.child(`documentos/${nombreZip}`);
+  try {
+    const file = new File([zipBlob], nombreZip, { type: "application/zip" });
 
-    try {
-      await zipRef.put(zipBlob);
-      const downloadURL = await zipRef.getDownloadURL();
+    const result = await filestackClient.upload(file);
+    const downloadURL = result.url;
 
-      const subject = encodeURIComponent("Documentos escaneados");
-      const body = encodeURIComponent(
-        `Hola,\n\nPuedes descargar el archivo ZIP con los documentos del trabajador ${nombreTrabajador} en el siguiente enlace:\n\n${downloadURL}\n\nSaludos.`
-      );
-      window.location.href = `mailto:?subject=${subject}&body=${body}`;
-    } catch (error) {
-      console.error("❌ Error al subir el archivo:", error);
-      alert("❌ No se pudo subir ni generar el enlace de descarga.");
-    }
-  };
+    const subject = encodeURIComponent("Documentos escaneados");
+    const body = encodeURIComponent(
+      `Hola,\n\nPuedes descargar el archivo ZIP con los documentos del trabajador ${nombreTrabajador} en el siguiente enlace:\n\n${downloadURL}\n\nSaludos.`
+    );
+
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  } catch (error) {
+    console.error("❌ Error al subir el archivo:", error);
+    alert("❌ No se pudo subir ni generar el enlace de descarga.");
+  }
+};
+
 
   // Navegación
   btnRegresar.onclick = () => window.location.href = origen;
