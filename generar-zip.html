@@ -34,10 +34,10 @@
   <h1>Vista previa de documentos escaneados</h1>
   <div id="preview-container"></div>
 
-  <!-- 🔹 Campo para capturar o mostrar el nombre del trabajador -->
+  <!-- Campo para capturar el número de IMSS -->
   <div id="nombreManualContainer">
-    <label for="nombreManual">👤 Numero de Imss:</label>
-    <input type="text" id="nombreManual" placeholder="Escribe Numero de Imss" />
+    <label for="nombreManual">👤 Número de IMSS:</label>
+    <input type="text" id="nombreManual" placeholder="Escribe el número de IMSS" />
   </div>
 
   <div class="buttons">
@@ -47,10 +47,9 @@
     <button class="email" id="btnEmail">✉️ Enviar por correo</button>
     <button class="inicio" id="btnInicio">🏠 Volver al inicio</button>
     <a id="descargarZip" class="boton" style="display:none; background-color: #db1414; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none;">⬇️ Descargar ZIP</a>
-
   </div>
 
-  <div id="mensajeExito">
+  <div id="mensajeExito" style="display: none;">
     <h3>✅ ZIP generado exitosamente</h3>
     <div id="listaDocs">
       <strong>Documentos incluidos:</strong>
@@ -58,29 +57,31 @@
     </div>
   </div>
 
-  <!-- Scripts necesarios -->
+  <!-- 🔹 Librerías necesarias -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.5/dist/tesseract.min.js"></script>
-  <!-- Firebase App (núcleo) -->
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<!-- Firebase Storage -->
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
-<script>
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyC_WhpJxW6V6C6stDeyv6wGsj4-2rR2edQ",
-  authDomain: "appreclutameinto.firebaseapp.com",
-  databaseURL: "https://appreclutameinto-default-rtdb.firebaseio.com",
-  projectId: "appreclutameinto",
-  storageBucket: "appreclutameinto.firebasestorage.app",
-  messagingSenderId: "447789838113",
-  appId: "1:447789838113:web:41d7c2ba5cd6bb304e5860",
-  measurementId: "G-M9LWSVYNHC"
-};
 
-</script>
-  <script src="https://static.filestackapi.com/filestack-js/3.x.x/filestack.min.js"></script>
+  <!-- 🔹 Firebase App (núcleo) y Storage -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+  <script>
+    // ✅ Configuración e inicialización de Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyC_WhpJxW6V6C6stDeyv6wGsj4-2rR2edQ",
+      authDomain: "appreclutameinto.firebaseapp.com",
+      databaseURL: "https://appreclutameinto-default-rtdb.firebaseio.com",
+      projectId: "appreclutameinto",
+      storageBucket: "appreclutameinto.appspot.com", // 🔧 CORREGIDO
+      messagingSenderId: "447789838113",
+      appId: "1:447789838113:web:41d7c2ba5cd6bb304e5860",
+      measurementId: "G-M9LWSVYNHC"
+    };
 
+    firebase.initializeApp(firebaseConfig);
+    const storage = firebase.storage();
+  </script>
+
+  <!-- 🔹 Script principal donde va la lógica ZIP + subida -->
   <script src="zip.js"></script>
 
 </body>
