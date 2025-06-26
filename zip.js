@@ -124,12 +124,11 @@ document.addEventListener("DOMContentLoaded", () => {
   btnWhatsApp.onclick = async () => {
   if (!zipBlob) return alert("Primero genera el ZIP.");
 
-  const storageRef = firebase.storage().ref();
-  const zipRef = storageRef.child(`documentos/${nombreZip}`);
-
   try {
-    await zipRef.put(zipBlob);
-    const downloadURL = await zipRef.getDownloadURL();
+    const file = new File([zipBlob], nombreZip, { type: "application/zip" });
+
+    const result = await filestackClient.upload(file);
+    const downloadURL = result.url;
 
     const mensaje = encodeURIComponent(
       `Hola, aquí tienes el ZIP con documentos del trabajador ${nombreTrabajador}:\n${downloadURL}`
