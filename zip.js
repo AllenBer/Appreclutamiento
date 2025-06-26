@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-storage.js";
 
-// Tu configuración de Firebase
+// Configuración Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyC_WhpJxW6V6C6stDeyv6wGsj4-2rR2edQ",
   authDomain: "appreclutameinto.firebaseapp.com",
@@ -14,6 +14,7 @@ const firebaseConfig = {
 // Inicializar Firebase
 const app = initializeApp(firebaseConfig);
 const storage = getStorage(app);
+
 document.addEventListener("DOMContentLoaded", () => {
   const btnGenerarZIP = document.getElementById("btnGenerarZIP");
   const btnWhatsApp = document.getElementById("btnWhatsApp");
@@ -27,9 +28,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const inputNombreManual = document.getElementById("nombreManual");
 
   const origen = localStorage.getItem("origen") || "documentacion-general.html";
-  const imagenes = JSON.parse(localStorage.getItem(
-    origen.includes("empresa") ? "scannedDocsEmpresa" : "scannedDocsGeneral"
-  ) || "{}");
+  const imagenes = JSON.parse(
+    localStorage.getItem(origen.includes("empresa") ? "scannedDocsEmpresa" : "scannedDocsGeneral") || "{}"
+  );
 
   const posiblesDocs = ["ine_frente", "curp", "contrato_laboral", "carta_responsiva"];
   let zipBlob = null;
@@ -40,7 +41,7 @@ document.addEventListener("DOMContentLoaded", () => {
   Object.entries(imagenes).forEach(([docType, url]) => {
     const item = document.createElement("div");
     item.className = "preview-item";
-    item.innerHTML = `<strong>${docType}</strong><br><img src="${url}" alt="${docType}">`;
+    item.innerHTML = `<strong>${docType}</strong><br><img src="${url}" alt="${docType}" style="max-width: 200px; max-height: 200px;">`;
     container.appendChild(item);
   });
 
@@ -70,7 +71,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
     }
-
     return "";
   }
 
@@ -108,7 +108,7 @@ document.addEventListener("DOMContentLoaded", () => {
     for (const [docType, url] of Object.entries(imagenes)) {
       const response = await fetch(url);
       const blob = await response.blob();
-      const ext = blob.type.split("/")[1];
+      const ext = blob.type.split("/")[1] || "png";
       const nombreArchivo = `${docType}_${nombreTrabajador}.${ext}`;
       carpeta.file(nombreArchivo, blob);
 
@@ -137,52 +137,49 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   // Compartir por WhatsApp
- btnWhatsApp.onclick = async () => {
-  if (!zipBlob) return alert("Primero genera el ZIP.");
+  btnWhatsApp.onclick = async () => {
+    if (!zipBlob) return alert("Primero genera el ZIP.");
 
-  try {
-    const file = new File([zipBlob], nombreZip, { type: "application/zip" });
-    const storageRef = ref(storage, `zips/${nombreZip}`);
-    await uploadBytes(storageRef, file);
+    try {
+      const file = new File([zipBlob], nombreZip, { type: "application/zip" });
+      const storageRef = ref(storage, `zips/${nombreZip}`);
+      await uploadBytes(storageRef, file);
 
-    const downloadURL = await getDownloadURL(storageRef);
+      const downloadURL = await getDownloadURL(storageRef);
 
-    const mensaje = encodeURIComponent(
-      `Hola, aquí tienes el ZIP con documentos del trabajador ${nombreTrabajador}:\n${downloadURL}`
-    );
+      const mensaje = encodeURIComponent(
+        `Hola, aquí tienes el ZIP con documentos del trabajador ${nombreTrabajador}:\n${downloadURL}`
+      );
 
-    window.open(`https://wa.me/?text=${mensaje}`, "_blank");
-  } catch (error) {
-    console.error("❌ Error al subir el archivo a Firebase:", error);
-    alert("❌ No se pudo subir ni generar el enlace de descarga.");
-  }
-};
-
+      window.open(`https://wa.me/?text=${mensaje}`, "_blank");
+    } catch (error) {
+      console.error("❌ Error al subir el archivo a Firebase:", error);
+      alert("❌ No se pudo subir ni generar el enlace de descarga.");
+    }
+  };
 
   // Enviar por correo
   btnEmail.onclick = async () => {
-  if (!zipBlob) return alert("Primero genera el ZIP.");
+    if (!zipBlob) return alert("Primero genera el ZIP.");
 
-  try {
-    const file = new File([zipBlob], nombreZip, { type: "application/zip" });
-    const storageRef = ref(storage, `zips/${nombreZip}`);
-    await uploadBytes(storageRef, file);
+    try {
+      const file = new File([zipBlob], nombreZip, { type: "application/zip" });
+      const storageRef = ref(storage, `zips/${nombreZip}`);
+      await uploadBytes(storageRef, file);
 
-    const downloadURL = await getDownloadURL(storageRef);
+      const downloadURL = await getDownloadURL(storageRef);
 
-    const subject = encodeURIComponent("Documentos del trabajador");
-    const body = encodeURIComponent(
-      `Hola,\n\nAdjunto el enlace para descargar el archivo ZIP con los documentos del trabajador ${nombreTrabajador}:\n${downloadURL}\n\nSaludos.`
-    );
+      const subject = encodeURIComponent("Documentos del trabajador");
+      const body = encodeURIComponent(
+        `Hola,\n\nAdjunto el enlace para descargar el archivo ZIP con los documentos del trabajador ${nombreTrabajador}:\n${downloadURL}\n\nSaludos.`
+      );
 
-    window.location.href = `mailto:?subject=${subject}&body=${body}`;
-  } catch (error) {
-    console.error("❌ Error al subir el archivo a Firebase:", error);
-    alert("❌ No se pudo subir ni generar el enlace de descarga.");
-  }
-};
-
-
+      window.location.href = `mailto:?subject=${subject}&body=${body}`;
+    } catch (error) {
+      console.error("❌ Error al subir el archivo a Firebase:", error);
+      alert("❌ No se pudo subir ni generar el enlace de descarga.");
+    }
+  };
 
   // Navegación
   btnRegresar.onclick = () => window.location.href = origen;
